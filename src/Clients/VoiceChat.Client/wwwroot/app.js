@@ -29,6 +29,18 @@ const chkPttMode = document.getElementById('chk-ptt-mode');
 const pttSettingsArea = document.getElementById('ptt-settings-area');
 const openmicSettingsArea = document.getElementById('openmic-settings-area');
 
+// LocalStorage'tan son giriş bilgilerini geri yükle
+try {
+    const savedServer = localStorage.getItem('hop_server_url');
+    const savedUsername = localStorage.getItem('hop_username');
+    const savedRoom = localStorage.getItem('hop_room_id');
+    if (savedServer) inputServerUrl.value = savedServer;
+    if (savedUsername) inputUsername.value = savedUsername;
+    if (savedRoom) inputRoomId.value = savedRoom;
+} catch (e) {
+    console.error("LocalStorage yükleme hatası:", e);
+}
+
 // Global Değişkenler
 let connection = null;
 let audioCtx = null;
@@ -170,6 +182,7 @@ async function connectToVoiceChat() {
         // Sunucu Olayları
         connection.on("UserJoined", async (connectionId) => {
             log(`Kullanıcı katıldı: ${connectionId}`);
+            playChime(true);
             // Yeni gelen kullanıcı için Peer oluştur ve teklif (offer) gönder
             await initiateCall(connectionId);
         });
@@ -198,6 +211,7 @@ async function connectToVoiceChat() {
 
         connection.on("UserLeft", (connectionId) => {
             log(`Kullanıcı ayrıldı: ${connectionId}`);
+            playChime(false);
             closePeerConnection(connectionId);
         });
 
@@ -211,6 +225,15 @@ async function connectToVoiceChat() {
         
         myConnectionId = connection.connectionId;
         log(`SignalR Bağlantısı kuruldu. ID: ${myConnectionId}`);
+
+        // Giriş bilgilerini kaydet
+        try {
+            localStorage.setItem('hop_server_url', serverUrl);
+            localStorage.setItem('hop_username', myUsername);
+            localStorage.setItem('hop_room_id', currentRoom);
+        } catch (e) {
+            console.error("LocalStorage kaydetme hatası:", e);
+        }
 
         // Odaya Katıl
         await connection.invoke("JoinRoom", currentRoom);
@@ -725,6 +748,22 @@ function updateMembersList() {
     });
 
     membersList.innerHTML = html;
+
+    // C# tarafına güncel üye listesini gönder (Hover Popup için)
+    try {
+        const memberNames = [myUsername + " (Sen)"];
+        Object.keys(peerConnections).forEach(connId => {
+            const pc = peerConnections[connId];
+            const name = pc.remoteUsername || "Misafir";
+            let statusText = "";
+            if (pc.isDeafened) statusText = " [Sağır]";
+            else if (pc.isMuted) statusText = " [Sessiz]";
+            memberNames.push(name + statusText);
+        });
+        sendToCsharp("member_list", memberNames);
+    } catch (e) {
+        console.error("Üye listesini C#'a gönderme hatası:", e);
+    }
 }
 
 function updateMemberName(connectionId, username) {
@@ -996,7 +1035,7 @@ btnChangeKey.addEventListener('click', () => {
         }
 
         // C#'a bildir
-        sendToCsharp("set_ptt_key", vkCode);
+        sendToCsharp("set_ptt_key", { vkCode: vkCode, keyName: keyName });
         
         pttKeyDisplay.textContent = keyName;
         btnChangeKey.textContent = "Değiştir";
@@ -1046,4 +1085,49 @@ function showStatus(msg, type) {
 function log(msg, type = 'info') {
     console.log(`[${type.toUpperCase()}] ${msg}`);
     sendToCsharp("log", `[${type.toUpperCase()}] ${msg}`);
+}
+
+// Giriş/Çıkış sesleri için Oscillator tabanlı chime çalar
+function playChime(isJoin) {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        
+        if (isJoin) {
+            // Yükselen ses chime: C5 -> E5 -> G5
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.07); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.14); // G5
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.03);
+            gainNode.gain.setValueAtTime(0.12, now + 0.20);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+            
+            osc.start(now);
+            osc.stop(now + 0.33);
+        } else {
+            // Düşen ses chime: G5 -> E5 -> C5
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(783.99, now); // G5
+            osc.frequency.setValueAtTime(659.25, now + 0.07); // E5
+            osc.frequency.setValueAtTime(523.25, now + 0.14); // C5
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.03);
+            gainNode.gain.setValueAtTime(0.12, now + 0.20);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+            
+            osc.start(now);
+            osc.stop(now + 0.33);
+        }
+    } catch (e) {
+        console.error("Ses çalma hatası:", e);
+    }
 }

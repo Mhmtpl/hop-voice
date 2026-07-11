@@ -74,16 +74,41 @@
                     </WrapPanel>
                 </StackPanel>
 
-                <!-- Sol bilgi: Hop + oda adı -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,6,0">
+                <!-- Sol bilgi: Hop + oda adı + PTT + Popup -->
+                <StackPanel x:Name="RoomInfoPanel" Grid.Column="1" VerticalAlignment="Center" Margin="6,0,6,0"
+                            Background="Transparent" MouseEnter="RoomInfoPanel_MouseEnter" MouseLeave="RoomInfoPanel_MouseLeave">
                     <TextBlock Text="Hop" FontWeight="Bold" FontSize="13"
                                Foreground="#C4B5FD" FontFamily="Segoe UI"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
                         <Ellipse Width="6" Height="6" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock x:Name="txtRoomName" Text="Genel" FontSize="9"
                                    Foreground="#99FFFFFF" FontFamily="Segoe UI"
                                    TextTrimming="CharacterEllipsis" MaxWidth="62"/>
                     </StackPanel>
+                    <TextBlock x:Name="txtPttKey" Text="PTT: Sol Ctrl" FontSize="8"
+                               Foreground="#66FFFFFF" FontFamily="Segoe UI" Margin="0,1,0,0"/>
+                    
+                    <!-- Odadaki üyeler için Hover Popup -->
+                    <Popup x:Name="memberPopup" PlacementTarget="{Binding ElementName=RoomInfoPanel}" Placement="Bottom"
+                           AllowsTransparency="True" PopupAnimation="Fade" StaysOpen="False" VerticalOffset="4">
+                        <Border CornerRadius="8" Background="#F40B0B18" BorderBrush="#8B5CF6" BorderThickness="1"
+                                Padding="8,6" Width="130">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#7C3AED" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="Odadaki Üyeler" FontWeight="Bold" FontSize="9" Foreground="#C4B5FD" Margin="0,0,0,4"/>
+                                <Rectangle Height="1" Fill="#22FFFFFF" Margin="0,0,0,4"/>
+                                <ItemsControl x:Name="lstMembers">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontSize="9" Foreground="#E0E7FF" Margin="0,1.5"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
                 </StackPanel>
 
                 <!-- Dikey ayraç çizgisi -->

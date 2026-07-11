@@ -18,6 +18,8 @@ namespace VoiceChat.Client
         
         // Varsayılan Bas-Konuş tuşu: Sol Ctrl (Virtual Key Code: 162)
         private int _pttVirtualKeyCode = 162; 
+        private string _pttKeyName = "Sol Ctrl";
+        private string[] _currentMembers = Array.Empty<string>();
 
         public MainWindow()
         {
@@ -64,7 +66,7 @@ namespace VoiceChat.Client
                 this.Hide();
                 if (_overlayWindow == null)
                 {
-                    _overlayWindow = new OverlayWindow(this, _currentRoom);
+                    _overlayWindow = new OverlayWindow(this, _currentRoom, _pttKeyName);
                     _overlayWindow.Closed += (s, ev) =>
                     {
                         _overlayWindow = null;
@@ -78,6 +80,7 @@ namespace VoiceChat.Client
                     };
                 }
                 _overlayWindow.Show();
+                _overlayWindow.UpdateMemberList(_currentMembers);
                 SendToJs("get_states", null);
             }
             catch
@@ -200,9 +203,21 @@ namespace VoiceChat.Client
                             if (message.Data != null)
                             {
                                 int newKey = 0;
+                                string keyName = "Sol Ctrl";
                                 if (message.Data is JsonElement element)
                                 {
-                                    if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out int val))
+                                    if (element.ValueKind == JsonValueKind.Object)
+                                    {
+                                        if (element.TryGetProperty("vkCode", out var vkProp) && vkProp.TryGetInt32(out int vkVal))
+                                        {
+                                            newKey = vkVal;
+                                        }
+                                        if (element.TryGetProperty("keyName", out var nameProp))
+                                        {
+                                            keyName = nameProp.GetString() ?? "Bilinmeyen";
+                                        }
+                                    }
+                                    else if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out int val))
                                     {
                                         newKey = val;
                                     }
@@ -215,8 +230,23 @@ namespace VoiceChat.Client
                                 if (newKey != 0)
                                 {
                                     _pttVirtualKeyCode = newKey;
-                                    SendToJs("log", $"[C# Host] Bas-Konuş tuşu başarıyla güncellendi: VK {newKey}");
+                                    _pttKeyName = keyName;
+                                    SendToJs("log", $"[C# Host] Bas-Konuş tuşu başarıyla güncellendi: VK {newKey} ({keyName})");
+                                    _overlayWindow?.UpdatePttKey(keyName);
                                 }
+                            }
+                            break;
+
+                        case "member_list":
+                            if (message.Data is JsonElement memberElement && memberElement.ValueKind == JsonValueKind.Array)
+                            {
+                                var list = new System.Collections.Generic.List<string>();
+                                foreach (var item in memberElement.EnumerateArray())
+                                {
+                                    list.Add(item.GetString() ?? "");
+                                }
+                                _currentMembers = list.ToArray();
+                                _overlayWindow?.UpdateMemberList(_currentMembers);
                             }
                             break;
 
@@ -227,6 +257,7 @@ namespace VoiceChat.Client
                                 if (connElement.TryGetProperty("room", out var roomProp))
                                 {
                                     _currentRoom = roomProp.GetString() ?? "Genel";
+                                    _overlayWindow?.UpdateRoomName(_currentRoom);
                                 }
                             }
                             break;

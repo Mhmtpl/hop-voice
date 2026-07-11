@@ -9,13 +9,14 @@ namespace VoiceChat.Client
     {
         private readonly MainWindow _mainWindow;
 
-        public OverlayWindow(MainWindow mainWindow, string roomName = "Genel")
+        public OverlayWindow(MainWindow mainWindow, string roomName = "Genel", string pttKeyName = "Sol Ctrl")
         {
             InitializeComponent();
             _mainWindow = mainWindow;
 
             // Oda adını göster
             txtRoomName.Text = roomName;
+            txtPttKey.Text = $"PTT: {pttKeyName}";
 
             // Konumu ekranın sağ alt köşesine ayarla
             double screenWidth = SystemParameters.WorkArea.Width;
@@ -30,6 +31,33 @@ namespace VoiceChat.Client
             {
                 this.DragMove();
             }
+        }
+
+        // Dışarıdan oda ismini güncellemek için
+        public void UpdateRoomName(string roomName)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                txtRoomName.Text = roomName;
+            });
+        }
+
+        // Dışarıdan PTT tuş ismini güncellemek için
+        public void UpdatePttKey(string keyName)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                txtPttKey.Text = $"PTT: {keyName}";
+            });
+        }
+
+        // Dışarıdan üye listesini güncellemek için
+        public void UpdateMemberList(string[] members)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                lstMembers.ItemsSource = members;
+            });
         }
 
         // Dışarıdan mute/deafen durumunu güncellemek için
@@ -72,6 +100,16 @@ namespace VoiceChat.Client
                     deafenLabel.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#88FFFFFF"));
                 }
             });
+        }
+
+        private void RoomInfoPanel_MouseEnter(object sender, MouseEventArgs e)
+        {
+            memberPopup.IsOpen = true;
+        }
+
+        private void RoomInfoPanel_MouseLeave(object sender, MouseEventArgs e)
+        {
+            memberPopup.IsOpen = false;
         }
 
         private void MuteButton_Click(object sender, RoutedEventArgs e)

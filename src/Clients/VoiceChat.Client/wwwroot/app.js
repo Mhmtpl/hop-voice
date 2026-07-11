@@ -339,6 +339,11 @@ async function handleWebRtcSignal(senderConnectionId, signal) {
             pc.iceQueue = pc.iceQueue || [];
             await pc.setRemoteDescription(new RTCSessionDescription(signal.answer));
             
+            // Eğer kullanıcı ismi sinyalde varsa kaydet (Initiator tarafında isim güncellemesi)
+            if (signal.username) {
+                updateMemberName(senderConnectionId, signal.username);
+            }
+            
             // Bekleyen ICE adaylarını ekle
             await processIceQueue(pc);
         }

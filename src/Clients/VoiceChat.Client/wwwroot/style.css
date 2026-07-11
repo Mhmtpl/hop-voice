@@ -879,9 +879,9 @@ body {
 .logo-img {
     width: 90px;
     height: 90px;
-    border-radius: 20px;
     margin-bottom: 12px;
-    box-shadow: 0 0 32px rgba(139, 92, 246, 0.4), 0 0 8px rgba(139, 92, 246, 0.2);
+    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+    object-fit: contain;
 }
 
 .slogan {
@@ -897,8 +897,8 @@ body {
 .sidebar-logo-img {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.4));
+    object-fit: contain;
 }
 
 .logo-meta {

@@ -875,5 +875,54 @@ body {
     border-radius: 1px;
 }
 
+/* Hop Logo ve Slogan Stilleri */
+.logo-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.slogan {
+    color: #f59e0b;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+    margin-top: 4px;
+}
+
+.sidebar-logo-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.logo-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.app-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.app-slogan {
+    font-size: 9px;
+    font-weight: 600;
+    color: #f59e0b;
+    font-style: italic;
+    letter-spacing: 0.2px;
+    line-height: 1;
+}
+
 
 

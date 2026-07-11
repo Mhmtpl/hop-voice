@@ -1,0 +1,133 @@
+<Window x:Class="VoiceChat.Client.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Hop Overlay" Height="50" Width="240"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="Manual">
+    
+    <Window.Resources>
+        <!-- Modern Buton Stili (Cam Efekti & Yuvarlak Hover) -->
+        <Style x:Key="OverlayCircleButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="18" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="Value" />
+                                <!-- Hover efekti için hafif aydınlık -->
+                                <Setter TargetName="border" Property="Background" Value="rgba(255, 255, 255, 0.08)"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="rgba(255, 255, 255, 0.15)"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Ana Kontrol Çubuğu (Glassmorphism & Neon Turuncu Kenarlık) -->
+    <Border BorderBrush="#F59E0B" BorderThickness="1.5" CornerRadius="25" Background="#EE110E20" 
+            MouseDown="Border_MouseDown" Margin="2">
+        <Border.Effect>
+            <!-- Şık turuncu parıldama efekti -->
+            <DropShadowEffect Color="#F59E0B" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <!-- Sürükleme Kulpu -->
+                <ColumnDefinition Width="25"/>
+                <!-- Mikrofon -->
+                <ColumnDefinition Width="45"/>
+                <!-- Kulaklık -->
+                <ColumnDefinition Width="45"/>
+                <!-- Büyüt -->
+                <ColumnDefinition Width="45"/>
+                <!-- Kapat (Kırmızı) -->
+                <ColumnDefinition Width="50"/>
+                <!-- Boşluk sağlama -->
+                <ColumnDefinition Width="20"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Sürükleme Tutamacı (Noktalar) -->
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="8,0,0,0" IsHitTestVisible="False">
+                <WrapPanel Width="6" Height="14" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse Width="2.5" Height="2.5" Fill="LightGray" Margin="0,1,1,1"/>
+                    <Ellipse Width="2.5" Height="2.5" Fill="LightGray" Margin="0,1,1,1"/>
+                    <Ellipse Width="2.5" Height="2.5" Fill="LightGray" Margin="0,1,1,1"/>
+                    <Ellipse Width="2.5" Height="2.5" Fill="LightGray" Margin="0,1,1,1"/>
+                    <Ellipse Width="2.5" Height="2.5" Fill="LightGray" Margin="0,1,1,1"/>
+                    <Ellipse Width="2.5" Height="2.5" Fill="LightGray" Margin="0,1,1,1"/>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Mikrofon Butonu -->
+            <Button Grid.Column="1" Style="{StaticResource OverlayCircleButton}" Click="MuteButton_Click">
+                <Grid>
+                    <!-- Mikrofon Path -->
+                    <Path x:Name="micPath" Fill="#FFFFFF" Stretch="Uniform" Width="14" Height="14"
+                          Data="M 12 4 C 10.3 4 9 5.3 9 7 L 9 13 C 9 14.7 10.3 16 12 16 C 13.7 16 15 14.7 15 13 L 15 7 C 15 5.3 13.7 4 12 4 Z M 18 11 L 17 11 C 17 13.5 14.9 15.5 12.3 15.5 C 9.8 15.5 7.7 13.5 7.7 11 L 6.7 11 C 6.7 13.8 8.7 16.1 11.3 16.4 L 11.3 19 L 12.7 19 L 12.7 16.4 C 15.3 16.1 17.3 13.8 17.3 11 Z"/>
+                    <!-- Mute Çizgisi (Başlangıçta Gizli) -->
+                    <Line x:Name="micSlash" X1="0" Y1="14" X2="14" Y2="0" Stroke="#EF4444" StrokeThickness="2.5" Visibility="Collapsed"/>
+                </Grid>
+            </Button>
+
+            <!-- Sağırlaştırma (Kulaklık) Butonu -->
+            <Button Grid.Column="2" Style="{StaticResource OverlayCircleButton}" Click="DeafenButton_Click">
+                <Grid>
+                    <!-- Kulaklık Path -->
+                    <Path x:Name="deafenPath" Fill="#FFFFFF" Stretch="Uniform" Width="15" Height="15"
+                          Data="M 12 3 C 7 3 3 7 3 12 L 3 15 C 3 16.7 4.3 18 6 18 L 7 18 C 8.1 18 9 17.1 9 16 L 9 12 C 9 10.9 8.1 10 7 10 L 5 10 C 5 7.2 8.1 5 12 5 C 15.9 5 19 7.2 19 10 L 17 10 C 15.9 10 15 10.9 15 12 L 15 16 C 15 17.1 15.9 18 17 18 L 18 18 C 19.7 18 21 16.7 21 15 L 21 12 C 21 7 17 3 12 3 Z"/>
+                    <!-- Deafen Çizgisi (Başlangıçta Gizli) -->
+                    <Line x:Name="deafenSlash" X1="0" Y1="15" X2="15" Y2="0" Stroke="#EF4444" StrokeThickness="2.5" Visibility="Collapsed"/>
+                </Grid>
+            </Button>
+
+            <!-- Büyüt (Pencereyi Geri Aç) Butonu -->
+            <Button Grid.Column="3" Style="{StaticResource OverlayCircleButton}" Click="RestoreButton_Click" ToolTip="Uygulamayı Büyüt">
+                <!-- Büyüt/Genişlet İkonu -->
+                <Path Fill="#FFFFFF" Stretch="Uniform" Width="14" Height="14"
+                      Data="M 4 4 L 10 4 L 10 6 L 6 6 L 6 14 L 14 14 L 14 10 L 16 10 L 16 16 L 4 16 Z M 11 4 L 16 4 L 16 9 L 14.5 7.5 L 10 12 L 8.5 10.5 L 13 6 Z"/>
+            </Button>
+
+            <!-- Bağlantıyı Kes (Kırmızı Buton) -->
+            <Button Grid.Column="4" Click="DisconnectButton_Click" ToolTip="Bağlantıyı Kes">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="18" Width="36" Height="36" Background="#EF4444" Cursor="Hand">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#DC2626"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#EF4444" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#B91C1C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <Path Fill="#FFFFFF" Stretch="Uniform" Width="14" Height="14"
+                      Data="M 12 9 C 9.7 9 7.5 9.4 5.5 10.1 L 5.5 13.2 C 5.5 13.6 5.3 13.9 5 14.1 C 3.9 14.6 3 15.4 2.2 16.3 C 2.1 16.4 2 16.6 2 16.8 C 2 17 2.1 17.2 2.2 17.3 L 4.7 19.8 C 4.9 20 5.2 20.1 5.5 20.1 C 5.8 20.1 6.1 20 6.3 19.8 L 8.3 17.8 C 8.5 17.6 8.6 17.3 8.6 17 L 8.6 14.5 C 9.7 14.2 10.8 14 12 14 C 13.2 14 14.3 14.2 15.4 14.5 L 15.4 17 C 15.4 17.3 15.5 17.6 15.7 17.8 L 17.7 19.8 C 17.9 20 18.2 20.1 18.5 20.1 C 18.8 20.1 19.1 20 19.3 19.8 L 21.8 17.3 C 21.9 17.2 22 17 22 16.8 C 22 16.6 21.9 16.4 21.8 16.3 C 21 15.4 20.1 14.6 19 14.1 C 18.7 13.9 18.5 13.6 18.5 13.2 L 18.5 10.1 C 16.5 9.4 14.3 9 12 9 Z"/>
+            </Button>
+        </Grid>
+    </Border>
+</Window>

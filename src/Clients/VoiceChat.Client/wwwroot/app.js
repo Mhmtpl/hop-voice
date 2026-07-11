@@ -99,6 +99,18 @@ function handleCsharpMessage(action, data) {
             log(`PTT Tuş Tetiklendi: ${data.active ? 'BASILDI' : 'BIRAKILDI'}`, 'info');
             setPushToTalkState(data.active);
             break;
+        case 'get_states':
+            sendToCsharp("state_changed", { isMuted: isMuted, isDeafened: isDeafened });
+            break;
+        case 'toggle_mute':
+            toggleMuteState();
+            break;
+        case 'toggle_deafen':
+            toggleDeafenState();
+            break;
+        case 'disconnect':
+            disconnectAll();
+            break;
     }
 }
 
@@ -219,6 +231,10 @@ async function connectToVoiceChat() {
 
         loginScreen.classList.remove('active');
         mainScreen.classList.add('active');
+
+        // C# tarafına ses odasına başarıyla bağlandığımızı ve ilk mute durumunu bildir
+        sendToCsharp("connection_state", { connected: true });
+        sendToCsharp("state_changed", { isMuted: isMuted, isDeafened: isDeafened });
 
         // Kendi kaydımızı yerel listede göster
         updateMembersList();
@@ -569,9 +585,17 @@ function broadcastMuteState() {
 }
 
 // Mikrofonu Tamamen Susturma (Mute Butonu)
-btnMute.addEventListener('click', () => {
+btnMute.addEventListener('click', toggleMuteState);
+
+function toggleMuteState() {
     isMuted = !isMuted;
-    
+    updateMuteUI();
+    updateMembersList();
+    broadcastMuteState();
+    sendToCsharp("state_changed", { isMuted: isMuted, isDeafened: isDeafened });
+}
+
+function updateMuteUI() {
     if (isMuted) {
         btnMute.classList.add('active');
         btnMute.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
@@ -605,9 +629,7 @@ btnMute.addEventListener('click', () => {
             myMemberEl.classList.remove('muted');
         }
     }
-    updateMembersList();
-    broadcastMuteState();
-});
+}
 
 // Bağlantıyı Kesme
 btnDisconnect.addEventListener('click', disconnectAll);
@@ -638,6 +660,9 @@ function disconnectAll() {
     mainScreen.classList.remove('active');
     btnConnect.disabled = false;
     showStatus("Bağlantı kesildi.", "info");
+    
+    // C# tarafına ses odasından ayrıldığımızı bildir
+    sendToCsharp("connection_state", { connected: false });
 }
 
 // Odadaki Üyeler Listesini Güncelle
@@ -710,9 +735,17 @@ function updateMemberName(connectionId, username) {
 }
 
 // Sağırlaştırma (Deafen) İşlemi
-btnDeafen.addEventListener('click', () => {
+btnDeafen.addEventListener('click', toggleDeafenState);
+
+function toggleDeafenState() {
     isDeafened = !isDeafened;
-    
+    updateDeafenUI();
+    updateMembersList();
+    broadcastMuteState();
+    sendToCsharp("state_changed", { isMuted: isMuted, isDeafened: isDeafened });
+}
+
+function updateDeafenUI() {
     if (isDeafened) {
         btnDeafen.classList.add('active');
         btnDeafen.innerHTML = '<i class="fa-solid fa-headphones"></i>';
@@ -754,10 +787,7 @@ btnDeafen.addEventListener('click', () => {
         
         log("Ses alımı ve gönderimi tekrar açıldı.", "success");
     }
-    
-    updateMembersList();
-    broadcastMuteState();
-});
+}
 
 // Bireysel Ses Kaydırıcıları İçin Dinleyici (Event Delegation)
 membersList.addEventListener('input', (e) => {

@@ -11,6 +11,8 @@ namespace VoiceChat.Client
     {
         private readonly GlobalKeyboardHook _keyboardHook;
         private bool _isPttPressed = false;
+        private OverlayWindow? _overlayWindow;
+        private bool _isConnected = false;
         
         // Varsayılan Bas-Konuş tuşu: Sol Ctrl (Virtual Key Code: 162)
         private int _pttVirtualKeyCode = 162; 
@@ -27,6 +29,57 @@ namespace VoiceChat.Client
             Closed += MainWindow_Closed;
         }
 
+        protected override void OnStateChanged(EventArgs e)
+        {
+            if (this.WindowState == WindowState.Minimized)
+            {
+                EnterOverlayMode();
+            }
+            base.OnStateChanged(e);
+        }
+
+        private void EnterOverlayMode()
+        {
+            if (!_isConnected) return; // Bağlı değilsek yüzer bara geçme, normal simge durumuna küçül
+
+            this.Hide();
+            if (_overlayWindow == null)
+            {
+                _overlayWindow = new OverlayWindow(this);
+                _overlayWindow.Closed += (s, ev) => _overlayWindow = null;
+            }
+            _overlayWindow.Show();
+            SendToJs("get_states", null);
+        }
+
+        public void ToggleMuteFromOverlay()
+        {
+            SendToJs("toggle_mute", null);
+        }
+
+        public void ToggleDeafenFromOverlay()
+        {
+            SendToJs("toggle_deafen", null);
+        }
+
+        public void RestoreFromOverlay()
+        {
+            if (_overlayWindow != null)
+            {
+                _overlayWindow.Close();
+                _overlayWindow = null;
+            }
+            this.Show();
+            this.WindowState = WindowState.Normal;
+            this.Activate();
+        }
+
+        public void DisconnectFromOverlay()
+        {
+            SendToJs("disconnect", null);
+            RestoreFromOverlay();
+        }
+
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             try
@@ -38,7 +91,7 @@ namespace VoiceChat.Client
                 var options = new CoreWebView2EnvironmentOptions(
                     additionalBrowserArguments: "--disable-features=WebRtcHideLocalIpsWithMdns"
                 );
-                var environment = await CoreWebView2Environment.CreateAsync(null, uniqueUserDataFolder, options);
+                var environment = await CoreWebView2Environment.CreateAsync(null!, uniqueUserDataFolder, options);
                 await webView.EnsureCoreWebView2Async(environment);
 
                 // Local dosyaları yüklemek için sanal host eşlemesi yapıyoruz.
@@ -130,6 +183,30 @@ namespace VoiceChat.Client
                                 }
                             }
                             break;
+
+                        case "connection_state":
+                            if (message.Data is JsonElement connElement && connElement.TryGetProperty("connected", out var connProp))
+                            {
+                                _isConnected = connProp.GetBoolean();
+                            }
+                            break;
+
+                        case "state_changed":
+                            if (message.Data is JsonElement stateElement)
+                            {
+                                bool isMuted = false;
+                                bool isDeafened = false;
+                                if (stateElement.TryGetProperty("isMuted", out var muteProp))
+                                {
+                                    isMuted = muteProp.GetBoolean();
+                                }
+                                if (stateElement.TryGetProperty("isDeafened", out var deafenedProp))
+                                {
+                                    isDeafened = deafenedProp.GetBoolean();
+                                }
+                                _overlayWindow?.UpdateStates(isMuted, isDeafened);
+                            }
+                            break;
                             
                         case "log":
                             Console.WriteLine($"[JS Log] {message.Data}");
@@ -143,7 +220,7 @@ namespace VoiceChat.Client
             }
         }
 
-        private void SendToJs(string action, object data)
+        private void SendToJs(string action, object? data)
         {
             if (webView.CoreWebView2 != null)
             {

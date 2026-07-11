@@ -38,11 +38,7 @@ namespace VoiceChat.Client
                 string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "logo.ico");
                 if (File.Exists(iconPath))
                 {
-                    var icon = new BitmapImage();
-                    icon.BeginInit();
-                    icon.UriSource = new Uri(iconPath, UriKind.Absolute);
-                    icon.EndInit();
-                    this.Icon = icon;
+                    this.Icon = BitmapFrame.Create(new Uri(iconPath, UriKind.Absolute));
                 }
             }
             catch { /* İkon yüklenemezse sessizce devam et */ }

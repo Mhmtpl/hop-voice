@@ -254,6 +254,7 @@ async function connectToVoiceChat() {
 
         // Odaya Katıl
         await connection.invoke("JoinRoom", currentRoom);
+        playChime(true);
 
         // Ping-Pong gecikme testi başlat
         pingInterval = setInterval(async () => {
@@ -680,6 +681,7 @@ function updateMuteUI() {
 btnDisconnect.addEventListener('click', disconnectAll);
 
 function disconnectAll() {
+    playChime(false);
     if (pingInterval) {
         clearInterval(pingInterval);
         pingInterval = null;
@@ -1110,9 +1112,12 @@ function log(msg, type = 'info') {
 }
 
 // Giriş/Çıkış sesleri için Oscillator tabanlı chime çalar
-function playChime(isJoin) {
+async function playChime(isJoin) {
     if (!audioCtx) return;
     try {
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+        }
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode);

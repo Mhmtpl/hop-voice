@@ -881,17 +881,17 @@ body {
     height: 80px;
     border-radius: 18px;
     margin-bottom: 12px;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .slogan {
-    color: #f59e0b;
+    color: #10b981;
     font-style: italic;
     font-weight: 600;
     font-size: 13px;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
     margin-top: 4px;
 }
 
@@ -899,7 +899,7 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: 1px solid rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.15);
 }
 
 .logo-meta {
@@ -918,7 +918,7 @@ body {
 .app-slogan {
     font-size: 9px;
     font-weight: 600;
-    color: #f59e0b;
+    color: #10b981;
     font-style: italic;
     letter-spacing: 0.2px;
     line-height: 1;

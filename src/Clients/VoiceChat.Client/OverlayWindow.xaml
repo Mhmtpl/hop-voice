@@ -39,12 +39,12 @@
         </Style>
     </Window.Resources>
 
-    <!-- Ana Kontrol Çubuğu (Glassmorphism & Neon Turuncu Kenarlık) -->
-    <Border BorderBrush="#F59E0B" BorderThickness="1.5" CornerRadius="25" Background="#EE110E20" 
+    <!-- Ana Kontrol Çubuğu (Glassmorphism & Neon Yeşil Kenarlık) -->
+    <Border BorderBrush="#10B981" BorderThickness="1.5" CornerRadius="25" Background="#EE110E20" 
             MouseDown="Border_MouseDown" Margin="2">
         <Border.Effect>
-            <!-- Şık turuncu parıldama efekti -->
-            <DropShadowEffect Color="#F59E0B" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
+            <!-- Şık yeşil parıldama efekti -->
+            <DropShadowEffect Color="#10B981" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
         </Border.Effect>
         <Grid>
             <Grid.ColumnDefinitions>

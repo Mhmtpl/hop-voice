@@ -233,7 +233,7 @@ async function connectToVoiceChat() {
         mainScreen.classList.add('active');
 
         // C# tarafına ses odasına başarıyla bağlandığımızı ve ilk mute durumunu bildir
-        sendToCsharp("connection_state", { connected: true });
+        sendToCsharp("connection_state", { connected: true, room: currentRoom });
         sendToCsharp("state_changed", { isMuted: isMuted, isDeafened: isDeafened });
 
         // Kendi kaydımızı yerel listede göster

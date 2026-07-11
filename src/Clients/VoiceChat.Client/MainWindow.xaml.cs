@@ -14,6 +14,7 @@ namespace VoiceChat.Client
         private bool _isPttPressed = false;
         private OverlayWindow? _overlayWindow;
         private bool _isConnected = false;
+        private string _currentRoom = "Genel";
         
         // Varsayılan Bas-Konuş tuşu: Sol Ctrl (Virtual Key Code: 162)
         private int _pttVirtualKeyCode = 162; 
@@ -61,7 +62,7 @@ namespace VoiceChat.Client
             this.Hide();
             if (_overlayWindow == null)
             {
-                _overlayWindow = new OverlayWindow(this);
+                _overlayWindow = new OverlayWindow(this, _currentRoom);
                 _overlayWindow.Closed += (s, ev) => _overlayWindow = null;
             }
             _overlayWindow.Show();
@@ -204,6 +205,10 @@ namespace VoiceChat.Client
                             if (message.Data is JsonElement connElement && connElement.TryGetProperty("connected", out var connProp))
                             {
                                 _isConnected = connProp.GetBoolean();
+                                if (connElement.TryGetProperty("room", out var roomProp))
+                                {
+                                    _currentRoom = roomProp.GetString() ?? "Genel";
+                                }
                             }
                             break;
 

@@ -9,12 +9,15 @@ namespace VoiceChat.Client
     {
         private readonly MainWindow _mainWindow;
 
-        public OverlayWindow(MainWindow mainWindow)
+        public OverlayWindow(MainWindow mainWindow, string roomName = "Genel")
         {
             InitializeComponent();
             _mainWindow = mainWindow;
-            
-            // Konumu ekranın sağ alt köşesine ayarla (System Tray üzeri)
+
+            // Oda adını göster
+            txtRoomName.Text = roomName;
+
+            // Konumu ekranın sağ alt köşesine ayarla
             double screenWidth = SystemParameters.WorkArea.Width;
             double screenHeight = SystemParameters.WorkArea.Height;
             this.Left = screenWidth - this.Width - 20;
@@ -29,7 +32,7 @@ namespace VoiceChat.Client
             }
         }
 
-        // Dışarıdan durumları güncellemek için çağrılan metot
+        // Dışarıdan mute/deafen durumunu güncellemek için
         public void UpdateStates(bool isMuted, bool isDeafened)
         {
             Dispatcher.Invoke(() =>
@@ -37,48 +40,50 @@ namespace VoiceChat.Client
                 var redBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"));
                 var whiteBrush = Brushes.White;
 
+                // Mikrofon
                 if (isMuted)
                 {
                     micPath.Fill = redBrush;
                     micSlash.Visibility = Visibility.Visible;
+                    micLabel.Text = "Susturuldu";
+                    micLabel.Foreground = redBrush;
                 }
                 else
                 {
                     micPath.Fill = whiteBrush;
                     micSlash.Visibility = Visibility.Collapsed;
+                    micLabel.Text = "Mikrofon";
+                    micLabel.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#88FFFFFF"));
                 }
 
+                // Kulaklık
                 if (isDeafened)
                 {
                     deafenPath.Fill = redBrush;
                     deafenSlash.Visibility = Visibility.Visible;
+                    deafenLabel.Text = "Sağır";
+                    deafenLabel.Foreground = redBrush;
                 }
                 else
                 {
                     deafenPath.Fill = whiteBrush;
                     deafenSlash.Visibility = Visibility.Collapsed;
+                    deafenLabel.Text = "Ses";
+                    deafenLabel.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#88FFFFFF"));
                 }
             });
         }
 
         private void MuteButton_Click(object sender, RoutedEventArgs e)
-        {
-            _mainWindow.ToggleMuteFromOverlay();
-        }
+            => _mainWindow.ToggleMuteFromOverlay();
 
         private void DeafenButton_Click(object sender, RoutedEventArgs e)
-        {
-            _mainWindow.ToggleDeafenFromOverlay();
-        }
+            => _mainWindow.ToggleDeafenFromOverlay();
 
         private void RestoreButton_Click(object sender, RoutedEventArgs e)
-        {
-            _mainWindow.RestoreFromOverlay();
-        }
+            => _mainWindow.RestoreFromOverlay();
 
         private void DisconnectButton_Click(object sender, RoutedEventArgs e)
-        {
-            _mainWindow.DisconnectFromOverlay();
-        }
+            => _mainWindow.DisconnectFromOverlay();
     }
 }

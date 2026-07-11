@@ -140,41 +140,43 @@
 
                 </StackPanel>
 
-                <!-- Disconnect: kırmızı pill butonu -->
+                <!-- Disconnect: yuvarlak kırmızı buton, sadece telefon ikonu -->
                 <Button Grid.Column="4" Click="DisconnectButton_Click"
                         ToolTip="Bağlantıyı Kes"
                         Cursor="Hand" Focusable="False"
                         VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Margin="0,0,8,0">
+                        Margin="4,0,10,0">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="bg" CornerRadius="14" Background="#CCEF4444"
-                                    Padding="10,7">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Fill="White" Stretch="Uniform" Width="13" Height="13"
-                                          VerticalAlignment="Center"
-                                          Data="M 12 9 C 9.7 9 7.5 9.4 5.5 10.1 L 5.5 13.2 C 5.5 13.6 5.3 13.9 5 14.1 C 3.9 14.6 3 15.4 2.2 16.3 C 2 16.6 2 17 2.2 17.3 L 4.7 19.8 C 5.2 20.3 5.8 20.1 6.3 19.8 L 8.3 17.8 C 8.6 17.5 8.6 17 8.6 17 L 8.6 14.5 C 9.7 14.2 10.8 14 12 14 C 13.2 14 14.3 14.2 15.4 14.5 L 15.4 17 C 15.4 17.3 15.7 17.8 15.7 17.8 L 17.7 19.8 C 18.2 20.3 18.8 20.1 19.3 19.8 L 21.8 17.3 C 22 17 22 16.6 21.8 16.3 C 21 15.4 20.1 14.6 19 14.1 C 18.7 13.9 18.5 13.2 18.5 13.2 L 18.5 10.1 C 16.5 9.4 14.3 9 12 9 Z"/>
-                                    <TextBlock Text="Kapat" Foreground="White" FontSize="9"
-                                               FontFamily="Segoe UI" FontWeight="SemiBold"
-                                               VerticalAlignment="Center" Margin="5,0,0,0"/>
-                                </StackPanel>
+                            <Border x:Name="bg" CornerRadius="20" Width="40" Height="40"
+                                    Background="#EF4444">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bg" Property="Background" Value="#CCDC2626"/>
+                                    <Setter TargetName="bg" Property="Background" Value="#DC2626"/>
                                     <Setter TargetName="bg" Property="Effect">
                                         <Setter.Value>
-                                            <DropShadowEffect Color="#EF4444" BlurRadius="10"
-                                                              ShadowDepth="0" Opacity="0.7"/>
+                                            <DropShadowEffect Color="#EF4444" BlurRadius="12"
+                                                              ShadowDepth="0" Opacity="0.8"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="bg" Property="Background" Value="#CCB91C1C"/>
+                                    <Setter TargetName="bg" Property="Background" Value="#B91C1C"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Button.Template>
+                    <!-- Telefonu kapat ikonu (çevrilmiş ahize) -->
+                    <Path Fill="White" Width="20" Height="20" Stretch="Uniform"
+                          RenderTransformOrigin="0.5,0.5"
+                          Data="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.3 21 3 13.7 3 4.5c0-.6.4-1 1-1H8c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z">
+                        <Path.RenderTransform>
+                            <RotateTransform Angle="135"/>
+                        </Path.RenderTransform>
+                    </Path>
                 </Button>
 
             </Grid>

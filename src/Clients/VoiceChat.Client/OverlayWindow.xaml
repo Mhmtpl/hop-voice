@@ -148,7 +148,7 @@
                         Margin="0,0,8,0">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="bg" CornerRadius="14" Background="#CC EF4444"
+                            <Border x:Name="bg" CornerRadius="14" Background="#CCEF4444"
                                     Padding="10,7">
                                 <StackPanel Orientation="Horizontal">
                                     <Path Fill="White" Stretch="Uniform" Width="13" Height="13"

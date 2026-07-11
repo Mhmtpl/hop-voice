@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using Microsoft.Web.WebView2.Core;
 
 namespace VoiceChat.Client
@@ -27,6 +28,21 @@ namespace VoiceChat.Client
             
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
+
+            // Pencere başlık ikonunu disk yolundan yükle
+            try
+            {
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "logo.png");
+                if (File.Exists(iconPath))
+                {
+                    var icon = new BitmapImage();
+                    icon.BeginInit();
+                    icon.UriSource = new Uri(iconPath, UriKind.Absolute);
+                    icon.EndInit();
+                    this.Icon = icon;
+                }
+            }
+            catch { /* İkon yüklenemezse sessizce devam et */ }
         }
 
         protected override void OnStateChanged(EventArgs e)

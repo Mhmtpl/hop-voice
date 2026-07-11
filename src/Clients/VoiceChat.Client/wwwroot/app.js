@@ -29,6 +29,12 @@ const chkPttMode = document.getElementById('chk-ptt-mode');
 const pttSettingsArea = document.getElementById('ptt-settings-area');
 const openmicSettingsArea = document.getElementById('openmic-settings-area');
 
+// Mikrofon Testi Elementleri
+const btnTestMic = document.getElementById('btn-test-mic');
+const testMicText = document.getElementById('test-mic-text');
+const micTestContainer = document.getElementById('mic-test-container');
+const micTestFill = document.getElementById('mic-test-fill');
+
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
     const savedServer = localStorage.getItem('hop_server_url');
@@ -59,6 +65,13 @@ let lastPingTime = 0;
 let pingInterval = null;
 let localAudioSource = null;
 let localAudioAnalyser = null;
+
+// Mikrofon Test Durumu
+let testStream = null;
+let testAudioCtx = null;
+let testAnalyser = null;
+let testAnimationId = null;
+let isTestingMic = false;
 
 // Peer Connections: ConnectionId -> RTCPeerConnection
 const peerConnections = {};
@@ -131,6 +144,10 @@ btnConnect.addEventListener('click', connectToVoiceChat);
 
 // Bağlan Fonksiyonu
 async function connectToVoiceChat() {
+    // Mikrofon testi açık ise temizlemek için kapat
+    if (isTestingMic) {
+        await toggleMicTest();
+    }
     const serverUrl = inputServerUrl.value.trim();
     myUsername = inputUsername.value.trim() || "Anonim_" + Math.floor(Math.random() * 1000);
     currentRoom = inputRoomId.value.trim() || "Genel";
@@ -1129,5 +1146,79 @@ function playChime(isJoin) {
         }
     } catch (e) {
         console.error("Ses çalma hatası:", e);
+    }
+}
+
+// Mikrofon Testi Dinleyicisi
+btnTestMic.addEventListener('click', toggleMicTest);
+
+async function toggleMicTest() {
+    if (isTestingMic) {
+        // Durdur
+        isTestingMic = false;
+        btnTestMic.classList.remove('active');
+        testMicText.textContent = "Mikrofonu Test Et";
+        micTestContainer.style.display = 'none';
+
+        if (testAnimationId) {
+            cancelAnimationFrame(testAnimationId);
+            testAnimationId = null;
+        }
+
+        if (testStream) {
+            testStream.getTracks().forEach(track => track.stop());
+            testStream = null;
+        }
+
+        if (testAudioCtx) {
+            testAudioCtx.close();
+            testAudioCtx = null;
+        }
+        testAnalyser = null;
+    } else {
+        // Başlat
+        try {
+            const constraints = { audio: true, video: false };
+            if (selectedMicId) {
+                constraints.audio = { deviceId: { exact: selectedMicId } };
+            }
+            testStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+            testAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            testAnalyser = testAudioCtx.createAnalyser();
+            testAnalyser.fftSize = 256;
+
+            const source = testAudioCtx.createMediaStreamSource(testStream);
+            source.connect(testAnalyser);
+            // Hoparlöre bağlamıyoruz (feedback'i önlemek için sadece görsel yapıyoruz)
+
+            isTestingMic = true;
+            btnTestMic.classList.add('active');
+            testMicText.textContent = "Testi Durdur";
+            micTestContainer.style.display = 'flex';
+
+            const dataArray = new Uint8Array(testAnalyser.frequencyBinCount);
+            
+            function drawMeter() {
+                if (!isTestingMic) return;
+                testAnalyser.getByteFrequencyData(dataArray);
+
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / dataArray.length;
+                // Ses seviyesini 0-100 arasına ölçekle (ortalama genlik ~0-100 arasındadır)
+                const percent = Math.min(100, Math.round((average / 100) * 100));
+
+                micTestFill.style.width = percent + '%';
+                testAnimationId = requestAnimationFrame(drawMeter);
+            }
+
+            drawMeter();
+        } catch (err) {
+            console.error("Mikrofon testi başlatılamadı:", err);
+            alert("Mikrofona erişilemedi: " + err.message);
+        }
     }
 }

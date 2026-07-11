@@ -35,6 +35,18 @@
                     <input type="text" id="room-id" value="Genel" placeholder="Bağlanılacak oda...">
                 </div>
                 
+                <div class="mic-test-area">
+                    <button id="btn-test-mic" type="button" class="btn-secondary">
+                        <i class="fa-solid fa-microphone"></i> <span id="test-mic-text">Mikrofonu Test Et</span>
+                    </button>
+                    <div id="mic-test-container" class="mic-test-container" style="display: none;">
+                        <div class="mic-test-bar">
+                            <div id="mic-test-fill" class="mic-test-fill"></div>
+                        </div>
+                        <span class="mic-test-label">Ses seviyesi gösteriliyor</span>
+                    </div>
+                </div>
+
                 <button id="btn-connect" class="btn-primary">
                     <span class="btn-text">Bağlan</span>
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>

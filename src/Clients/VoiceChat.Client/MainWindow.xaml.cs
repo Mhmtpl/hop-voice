@@ -35,7 +35,7 @@ namespace VoiceChat.Client
             // Pencere başlık ikonunu disk yolundan yükle
             try
             {
-                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "logo.png");
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "logo.ico");
                 if (File.Exists(iconPath))
                 {
                     var icon = new BitmapImage();

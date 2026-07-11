@@ -59,14 +59,33 @@ namespace VoiceChat.Client
         {
             if (!_isConnected) return; // Bağlı değilsek yüzer bara geçme, normal simge durumuna küçül
 
-            this.Hide();
-            if (_overlayWindow == null)
+            try
             {
-                _overlayWindow = new OverlayWindow(this, _currentRoom);
-                _overlayWindow.Closed += (s, ev) => _overlayWindow = null;
+                this.Hide();
+                if (_overlayWindow == null)
+                {
+                    _overlayWindow = new OverlayWindow(this, _currentRoom);
+                    _overlayWindow.Closed += (s, ev) =>
+                    {
+                        _overlayWindow = null;
+                        // Overlay beklenmedik şekilde kapanırsa ana pencereyi geri getir
+                        if (!this.IsVisible)
+                        {
+                            this.Show();
+                            this.WindowState = WindowState.Normal;
+                            this.Activate();
+                        }
+                    };
+                }
+                _overlayWindow.Show();
+                SendToJs("get_states", null);
             }
-            _overlayWindow.Show();
-            SendToJs("get_states", null);
+            catch
+            {
+                // Overlay oluşturulamazsa ana pencereyi geri getir
+                this.Show();
+                this.WindowState = WindowState.Normal;
+            }
         }
 
         public void ToggleMuteFromOverlay()

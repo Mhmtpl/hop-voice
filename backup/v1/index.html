@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceChat Client</title>
+    <!-- Fontlar ve İkonlar -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Bağlantı Ekranı (Giriş) -->
+        <div id="login-screen" class="screen-overlay active">
+            <div class="login-card glass">
+                <div class="logo">
+                    <i class="fa-solid fa-microphone-lines logo-icon"></i>
+                    <h2>Anti-Discord</h2>
+                    <p>Temiz, Hızlı ve Güvenli Sesli Sohbet</p>
+                </div>
+                
+                <div class="input-group">
+                    <label for="server-url"><i class="fa-solid fa-server"></i> Sunucu Adresi</label>
+                    <input type="text" id="server-url" value="http://85.235.74.24:5000" placeholder="http://192.168.1.50:5000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="username"><i class="fa-solid fa-user"></i> Kullanıcı Adı</label>
+                    <input type="text" id="username" placeholder="Kullanıcı adınızı yazın..." maxlength="15">
+                </div>
+                
+                <div class="input-group">
+                    <label for="room-id"><i class="fa-solid fa-hashtag"></i> Oda Adı</label>
+                    <input type="text" id="room-id" value="Genel" placeholder="Bağlanılacak oda...">
+                </div>
+                
+                <button id="btn-connect" class="btn-primary">
+                    <span class="btn-text">Bağlan</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+                
+                <div id="connection-status" class="status-message"></div>
+            </div>
+        </div>
+
+        <!-- Ana Ses Paneli -->
+        <div id="main-screen" class="screen">
+            <!-- Sol Panel (Kanallar ve Oda Bilgisi) -->
+            <div class="sidebar glass-dark">
+                <div class="sidebar-header">
+                    <div class="server-title">
+                        <i class="fa-solid fa-circle-nodes"></i>
+                        <span>Ses Sunucusu</span>
+                    </div>
+                </div>
+
+                <div class="channel-section">
+                    <div class="section-title">SES KANALLARI</div>
+                    <div class="channel-list">
+                        <div class="channel-item active">
+                            <i class="fa-solid fa-volume-high"></i>
+                            <span id="active-room-name">Genel</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Odadaki Kullanıcılar Listesi -->
+                <div class="members-section">
+                    <div class="section-title">ODADAKİLER</div>
+                    <div id="members-list" class="members-list">
+                        <!-- JS ile dolacak -->
+                    </div>
+                </div>
+
+                <!-- Alt Profil Paneli -->
+                <div class="user-profile glass-light">
+                    <div class="user-avatar-container">
+                        <div class="user-avatar" id="my-avatar">U</div>
+                        <div class="user-status-dot online"></div>
+                    </div>
+                    <div class="user-details">
+                        <span id="my-username" class="username">Kullanıcı</span>
+                        <span class="status-text">Bağlandı</span>
+                    </div>
+                    <div class="user-controls">
+                        <button id="btn-mute" class="control-btn" title="Mikrofonu Kapat/Aç">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+                        <button id="btn-disconnect" class="control-btn danger" title="Bağlantıyı Kes">
+                            <i class="fa-solid fa-phone-slash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ Panel (Ana Ekran / Görselleştirme) -->
+            <div class="main-content">
+                <div class="header">
+                    <div class="room-info">
+                        <i class="fa-solid fa-hashtag text-muted"></i>
+                        <span id="header-room-name">Genel</span>
+                        <span id="latency-indicator" class="badge"><i class="fa-solid fa-wifi"></i> Bağlı</span>
+                    </div>
+                </div>
+                
+                <div class="voice-dashboard">
+                    <div class="central-mic">
+                        <div class="wave-circle ring-3"></div>
+                        <div class="wave-circle ring-2"></div>
+                        <div class="wave-circle ring-1"></div>
+                        <div class="mic-inner-circle" id="ptt-indicator-circle">
+                            <i class="fa-solid fa-microphone-lines"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="ptt-info-card glass">
+                        <div class="mode-toggle-container">
+                            <span class="mode-label">Bas-Konuş Aktif</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="chk-ptt-mode" checked>
+                                <label for="chk-ptt-mode"></label>
+                            </div>
+                        </div>
+
+                        <div id="ptt-settings-area">
+                            <h3>Bas-Konuş Modu</h3>
+                            <p class="text-muted">Mikrofonunuzu açmak için tuşa basılı tutun.</p>
+                            <div class="shortcut-box">
+                                <span class="label">Kısayol Tuşu:</span>
+                                <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
+                                <button id="btn-change-key" class="btn-small">Değiştir</button>
+                            </div>
+                        </div>
+
+                        <div id="openmic-settings-area" style="display: none;">
+                            <h3>Sürekli Açık (Open Mic)</h3>
+                            <p class="text-muted">Mikrofonunuz sürekli aktiftir. Susturmak için sol alttaki ikonu kullanabilirsiniz.</p>
+                        </div>
+
+                        <div class="mic-status" id="mic-status-text">MİKROFON KAPALI</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ses Elementlerinin Tutulacağı Gizli Bölüm (display: none yapmıyoruz çünkü tarayıcı sesi askıya alabilir) -->
+    <div id="audio-container" style="position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none;"></div>
+
+    <!-- Hata Ayıklama Günlüğü (Debug Logs Panel) -->
+    <div class="debug-panel glass">
+        <div class="debug-header" id="debug-header">
+            <span><i class="fa-solid fa-bug"></i> Sistem Logları</span>
+            <i class="fa-solid fa-chevron-up" id="debug-icon"></i>
+        </div>
+        <div class="debug-logs" id="debug-logs" style="display: none;">
+            <div class="log-item success">Uygulama başlatıldı. Loglar burada görünecek.</div>
+        </div>
+    </div>
+
+    <!-- SignalR Client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

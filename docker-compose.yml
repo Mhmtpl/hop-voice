@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: microservices-postgres
+    environment:
+      POSTGRES_PASSWORD: "12345678A"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: microservices-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Web Arayüzü
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: microservices-jaeger
+    ports:
+      - "16686:16686" # Tracing Arayüzü (Web UI)
+      - "4317:4317"   # OTLP gRPC girişi
+
+  productservice:
+    image: productservice:latest
+    build:
+      context: .
+      dockerfile: src/Services/ProductService/Dockerfile
+    container_name: product-service
+    ports:
+      - "5093:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=product_db;Username=postgres;Password=12345678A
+      - OtelExporterOtlpEndpoint=http://jaeger:4317
+    depends_on:
+      - postgres
+      - jaeger
+
+  orderservice:
+    image: orderservice:latest
+    build:
+      context: .
+      dockerfile: src/Services/OrderService/Dockerfile
+    container_name: order-service
+    ports:
+      - "5249:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=order_db;Username=postgres;Password=12345678A
+      - ProductGrpcUrl=http://productservice:8080
+      - RabbitMqHost=rabbitmq
+      - OtelExporterOtlpEndpoint=http://jaeger:4317
+    depends_on:
+      - postgres
+      - rabbitmq
+      - productservice
+      - jaeger
+
+  notificationservice:
+    image: notificationservice:latest
+    build:
+      context: .
+      dockerfile: src/Services/NotificationService/Dockerfile
+    container_name: notification-service
+    environment:
+      - RabbitMqHost=rabbitmq
+      - OtelExporterOtlpEndpoint=http://jaeger:4317
+    depends_on:
+      - rabbitmq
+      - jaeger
+
+  yarpapigateway:
+    image: yarpapigateway:latest
+    build:
+      context: .
+      dockerfile: src/Gateways/YarpApiGateway/Dockerfile
+    container_name: yarp-api-gateway
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ReverseProxy__Clusters__products_cluster__Destinations__destination1__Address=http://productservice:8080
+      - ReverseProxy__Clusters__orders_cluster__Destinations__destination1__Address=http://orderservice:8080
+      - OtelExporterOtlpEndpoint=http://jaeger:4317
+    depends_on:
+      - productservice
+      - orderservice
+      - jaeger
+
+volumes:
+  pgdata:

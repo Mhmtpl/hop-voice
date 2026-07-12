@@ -20,6 +20,11 @@ namespace VoiceChatService.Hubs
             _logger = logger;
         }
 
+        public async Task JoinRoom(string roomId)
+        {
+            await JoinRoom(roomId, "Anonim_" + Random.Shared.Next(1000));
+        }
+
         public async Task JoinRoom(string roomId, string username)
         {
             string connectionId = Context.ConnectionId;

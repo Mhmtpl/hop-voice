@@ -35,6 +35,13 @@ const testMicText = document.getElementById('test-mic-text');
 const micTestContainer = document.getElementById('mic-test-container');
 const micTestFill = document.getElementById('mic-test-fill');
 
+// Yazılı Sohbet Elementleri
+const btnToggleChat = document.getElementById('btn-toggle-chat');
+const chatPanel = document.getElementById('chat-panel');
+const chatMessages = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
     const savedServer = localStorage.getItem('hop_server_url');
@@ -160,6 +167,7 @@ async function connectToVoiceChat() {
     showStatus("Mikrofona erişiliyor...", "info");
     btnConnect.disabled = true;
 
+    let micAccessError = false;
     try {
         // 1. Kullanıcı mikrofonunu al
         const constraints = { 
@@ -178,9 +186,16 @@ async function connectToVoiceChat() {
 
         // Mikrofonu başlangıç moduna göre ayarla (Bas-konuş veya sürekli açık)
         setMicTrackEnabled(!isPttMode);
+    } catch (err) {
+        console.warn("Mikrofona erişilemedi veya mikrofon bulunamadı:", err);
+        localStream = null;
+        micAccessError = true;
+        isMuted = true; // Mikrofon yoksa sessize alalım
+    }
 
+    try {
         // Ses cihazlarını listele
-        await loadAudioDevices();
+        await loadAudioDevices().catch(e => console.warn("Cihaz listeleme hatası:", e));
 
         // Global AudioContext'i kullanıcı etkileşimi esnasında oluşturup başlatıyoruz.
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -188,7 +203,11 @@ async function connectToVoiceChat() {
             await audioCtx.resume();
         }
 
-        showStatus("Sunucuya bağlanılıyor...", "info");
+        if (micAccessError) {
+            showStatus("Mikrofon bulunamadı. Dinleme modunda bağlanılıyor...", "info");
+        } else {
+            showStatus("Sunucuya bağlanılıyor...", "info");
+        }
 
         // 2. SignalR Bağlantısını Kur
         connection = new signalR.HubConnectionBuilder()
@@ -237,6 +256,10 @@ async function connectToVoiceChat() {
             latencyIndicator.innerHTML = `<i class="fa-solid fa-wifi" style="color: #10b981;"></i> ${currentPing} ms`;
         });
 
+        connection.on("ReceiveChatMessage", (senderConnectionId, username, message) => {
+            appendChatMessage(senderConnectionId, username, message);
+        });
+
         // Bağlantıyı Başlat
         await connection.start();
         
@@ -253,7 +276,7 @@ async function connectToVoiceChat() {
         }
 
         // Odaya Katıl
-        await connection.invoke("JoinRoom", currentRoom);
+        await connection.invoke("JoinRoom", currentRoom, myUsername);
         playChime(true);
 
         // Ping-Pong gecikme testi başlat
@@ -383,10 +406,12 @@ function createPeerConnection(targetConnectionId, isInitiator) {
     peerConnections[targetConnectionId] = pc;
     pc.iceQueue = [];
 
-    // Yerel ses kanalını peer'a ekle
-    localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
-    });
+    // Yerel ses kanalını peer'a ekle (eğer mikrofon varsa)
+    if (localStream) {
+        localStream.getTracks().forEach(track => {
+            pc.addTrack(track, localStream);
+        });
+    }
 
     // ICE adaylarını (connection candidates) topla ve gönder
     pc.onicecandidate = (event) => {
@@ -540,7 +565,7 @@ function startAudioAnalysis(connectionId, stream) {
 // Kendi Sesimizi Arayüzde Canlandırmak İçin Analiz
 function startLocalAudioAnalysis() {
     try {
-        if (!audioCtx) return;
+        if (!audioCtx || !localStream) return;
         
         // Eğer eski bir kaynak varsa bağlantısını kes
         if (localAudioSource) {
@@ -893,6 +918,13 @@ async function loadAudioDevices() {
         const mics = devices.filter(d => d.kind === 'audioinput');
         const speakers = devices.filter(d => d.kind === 'audiooutput');
         
+        if (mics.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.textContent = "Mikrofon Bulunamadı";
+            selectMic.appendChild(opt);
+        }
+
         mics.forEach((d, index) => {
             const opt = document.createElement('option');
             opt.value = d.deviceId;
@@ -1231,4 +1263,64 @@ async function toggleMicTest() {
             alert("Mikrofona erişilemedi: " + err.message);
         }
     }
+}
+
+// Yazılı Sohbet İşlemleri
+btnToggleChat.addEventListener('click', () => {
+    chatPanel.classList.toggle('collapsed');
+});
+
+chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    if (connection && connection.state === signalR.HubConnectionState.Connected) {
+        try {
+            await connection.invoke("SendChatMessage", message);
+            chatInput.value = '';
+            chatInput.focus();
+        } catch (err) {
+            console.error("Mesaj gönderilemedi:", err);
+            appendSystemMessage("Mesaj gönderilemedi: " + err.message);
+        }
+    } else {
+        appendSystemMessage("Bağlantı kesildi, mesaj gönderilemez.");
+    }
+});
+
+function appendChatMessage(senderId, senderName, text) {
+    const isMe = senderId === myConnectionId;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'chat-message' + (isMe ? ' me' : '');
+
+    msgEl.innerHTML = `
+        <div class="chat-message-meta">
+            <span class="chat-message-sender">${senderName}</span>
+            <span class="chat-message-time">${timeStr}</span>
+        </div>
+        <div class="chat-message-body">${escapeHtml(text)}</div>
+    `;
+
+    chatMessages.appendChild(msgEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function appendSystemMessage(text) {
+    const msgEl = document.createElement('div');
+    msgEl.className = 'chat-message system';
+    msgEl.innerHTML = `<span class="message-content">${text}</span>`;
+    chatMessages.appendChild(msgEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
 }

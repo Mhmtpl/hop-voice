@@ -10,6 +10,9 @@ namespace VoiceChatService.Hubs
         
         // Kullanıcı eşlemeleri: ConnectionId -> RoomId
         private static readonly ConcurrentDictionary<string, string> UserRooms = new();
+
+        // Kullanıcı isimleri: ConnectionId -> Username
+        private static readonly ConcurrentDictionary<string, string> Usernames = new();
         private readonly ILogger<SignalingHub> _logger;
 
         public SignalingHub(ILogger<SignalingHub> logger)
@@ -17,11 +20,14 @@ namespace VoiceChatService.Hubs
             _logger = logger;
         }
 
-        public async Task JoinRoom(string roomId)
+        public async Task JoinRoom(string roomId, string username)
         {
             string connectionId = Context.ConnectionId;
-            _logger.LogInformation("Kullanıcı bağlandı: {ConnectionId}, Oda: {RoomId}", connectionId, roomId);
+            _logger.LogInformation("Kullanıcı bağlandı: {ConnectionId}, İsim: {Username}, Oda: {RoomId}", connectionId, username, roomId);
             
+            // Kullanıcı ismini kaydet
+            Usernames[connectionId] = username;
+
             // Eğer kullanıcı zaten başka bir odadaysa önce oradan çıkar
             await LeaveCurrentRoom();
 
@@ -51,6 +57,16 @@ namespace VoiceChatService.Hubs
             await Clients.Client(targetConnectionId).SendAsync("ReceiveSignal", Context.ConnectionId, signal);
         }
 
+        public async Task SendChatMessage(string message)
+        {
+            string connectionId = Context.ConnectionId;
+            if (UserRooms.TryGetValue(connectionId, out var roomId) && Usernames.TryGetValue(connectionId, out var username))
+            {
+                _logger.LogInformation("Mesaj gönderildi: {Username} ({ConnectionId}) -> {RoomId}: {Message}", username, connectionId, roomId, message);
+                await Clients.Group(roomId).SendAsync("ReceiveChatMessage", connectionId, username, message);
+            }
+        }
+
         public async Task Ping()
         {
             await Clients.Caller.SendAsync("Pong");
@@ -66,6 +82,10 @@ namespace VoiceChatService.Hubs
         {
             string connectionId = Context.ConnectionId;
             _logger.LogInformation("Kullanıcı ayrıldı: {ConnectionId}", connectionId);
+            
+            // Kullanıcı ismini temizle
+            Usernames.TryRemove(connectionId, out _);
+
             if (UserRooms.TryRemove(connectionId, out var roomId))
             {
                 // Odadan kullanıcının connectionId'sini temizle

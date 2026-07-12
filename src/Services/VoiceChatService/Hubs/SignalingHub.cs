@@ -20,21 +20,18 @@ namespace VoiceChatService.Hubs
             _logger = logger;
         }
 
-        public async Task JoinRoom(string roomId)
-        {
-            await JoinRoom(roomId, "Anonim_" + Random.Shared.Next(1000));
-        }
-
-        public async Task JoinRoom(string roomId, string username)
+        public async Task JoinRoom(string roomId, string username = null)
         {
             string connectionId = Context.ConnectionId;
-            _logger.LogInformation("Kullanıcı bağlandı: {ConnectionId}, İsim: {Username}, Oda: {RoomId}", connectionId, username, roomId);
+            string resolvedUsername = string.IsNullOrEmpty(username) ? "Anonim_" + Random.Shared.Next(1000) : username;
+            _logger.LogInformation("Kullanıcı bağlandı: {ConnectionId}, İsim: {Username}, Oda: {RoomId}", connectionId, resolvedUsername, roomId);
             
-            // Kullanıcı ismini kaydet
-            Usernames[connectionId] = username;
-
-            // Eğer kullanıcı zaten başka bir odadaysa önce oradan çıkar
+            // Eğer kullanıcı zaten başka bir odadaysa önce oradan çıkar (ve eski verileri temizler)
             await LeaveCurrentRoom();
+
+            // Şimdi güncel kullanıcı adı ve odayı kaydediyoruz
+            Usernames[connectionId] = resolvedUsername;
+            UserRooms[connectionId] = roomId;
 
             // Yeni odaya ekle
             var roomUsers = Rooms.GetOrAdd(roomId, _ => new ConcurrentBag<string>());
@@ -42,7 +39,6 @@ namespace VoiceChatService.Hubs
             {
                 roomUsers.Add(connectionId);
             }
-            UserRooms[connectionId] = roomId;
 
             // SignalR Grubu'na ekle
             await Groups.AddToGroupAsync(connectionId, roomId);

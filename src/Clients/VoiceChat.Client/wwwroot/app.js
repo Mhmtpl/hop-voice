@@ -52,6 +52,21 @@ const chatPreviewImg = document.getElementById('chat-preview-img');
 const btnCancelPreview = document.getElementById('btn-cancel-preview');
 let stagedImageBase64 = null;
 
+// Görüntülü Arama & Ekran Paylaşımı Elementleri ve Durumları
+const btnCamera = document.getElementById('btn-camera');
+const btnScreenshare = document.getElementById('btn-screenshare');
+const screenshareContainer = document.getElementById('screenshare-container');
+const screenshareVideo = document.getElementById('screenshare-video');
+const screenshareUsername = document.getElementById('screenshare-username');
+const videoGridContainer = document.getElementById('video-grid-container');
+const btnFullscreenShare = document.getElementById('btn-fullscreen-share');
+
+let isSharingCamera = false;
+let isSharingScreen = false;
+let localCameraStream = null;
+let localScreenStream = null;
+let activeScreenSharerId = null; // Ekran paylaşan peer'ın connectionId'si
+
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
     const savedServer = localStorage.getItem('hop_server_url');
@@ -261,6 +276,36 @@ async function connectToVoiceChat() {
             closePeerConnection(connectionId);
         });
 
+        connection.on("OnCameraShareToggled", (sharingUserId, username, isSharing) => {
+            log(`Kamera paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}`);
+            if (peerConnections[sharingUserId]) {
+                peerConnections[sharingUserId].isSharingCamera = isSharing;
+            }
+            if (isSharing) {
+                closePeerConnection(sharingUserId);
+            } else {
+                removeRemoteVideoElement(sharingUserId);
+                closePeerConnection(sharingUserId);
+            }
+            updateVideoLayout();
+        });
+
+        connection.on("OnScreenShareToggled", (sharingUserId, username, isSharing) => {
+            log(`Ekran paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}`);
+            if (isSharing) {
+                activeScreenSharerId = sharingUserId;
+                closePeerConnection(sharingUserId);
+            } else {
+                if (activeScreenSharerId === sharingUserId) {
+                    activeScreenSharerId = null;
+                    screenshareContainer.style.display = 'none';
+                    screenshareVideo.srcObject = null;
+                }
+                closePeerConnection(sharingUserId);
+            }
+            updateVideoLayout();
+        });
+
         connection.on("Pong", () => {
             const currentPing = Date.now() - lastPingTime;
             latencyIndicator.innerHTML = `<i class="fa-solid fa-wifi" style="color: #10b981;"></i> ${currentPing} ms`;
@@ -427,6 +472,20 @@ function createPeerConnection(targetConnectionId, isInitiator) {
         });
     }
 
+    // Yerel kamera video kanalını peer'a ekle
+    if (localCameraStream) {
+        localCameraStream.getTracks().forEach(track => {
+            pc.addTrack(track, localCameraStream);
+        });
+    }
+
+    // Yerel ekran video kanalını peer'a ekle
+    if (localScreenStream) {
+        localScreenStream.getTracks().forEach(track => {
+            pc.addTrack(track, localScreenStream);
+        });
+    }
+
     // ICE adaylarını (connection candidates) topla ve gönder
     pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -434,12 +493,53 @@ function createPeerConnection(targetConnectionId, isInitiator) {
         }
     };
 
-    // Karşı tarafın sesi geldiğinde
+    // Karşı tarafın sesi veya görüntüsü geldiğinde
     pc.ontrack = (event) => {
         const remoteStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
-        remoteStreams[targetConnectionId] = remoteStream;
 
-        // Ses oynatıcı element oluştur
+        // Video Kanalı Algılama (Kamera veya Ekran Paylaşımı)
+        if (event.track.kind === 'video') {
+            log(`Video track alındı, Hedef: ${targetConnectionId}`);
+            
+            // Ekran paylaşımı olup olmadığını algıla (displaySurface ayarı varsa ekran paylaşımıdır)
+            const settings = event.track.getSettings();
+            const isScreenShare = !!settings.displaySurface;
+
+            if (isScreenShare) {
+                screenshareVideo.srcObject = remoteStream;
+                screenshareUsername.textContent = `${peerConnections[targetConnectionId]?.remoteUsername || 'Arkadaşınız'} ekran paylaşıyor`;
+                screenshareContainer.style.display = 'flex';
+                activeScreenSharerId = targetConnectionId;
+                updateVideoLayout();
+
+                event.track.onended = () => {
+                    if (activeScreenSharerId === targetConnectionId) {
+                        activeScreenSharerId = null;
+                        screenshareContainer.style.display = 'none';
+                        screenshareVideo.srcObject = null;
+                        updateVideoLayout();
+                    }
+                };
+            } else {
+                createOrUpdateRemoteVideoElement(targetConnectionId, remoteStream);
+                if (peerConnections[targetConnectionId]) {
+                    peerConnections[targetConnectionId].isSharingCamera = true;
+                }
+                updateVideoLayout();
+
+                event.track.onended = () => {
+                    removeRemoteVideoElement(targetConnectionId);
+                    if (peerConnections[targetConnectionId]) {
+                        peerConnections[targetConnectionId].isSharingCamera = false;
+                    }
+                    updateVideoLayout();
+                };
+            }
+            return;
+        }
+
+        // Ses Kanalı (Audio)
+        remoteStreams[targetConnectionId] = remoteStream;
         let audio = audioElements[targetConnectionId];
         if (!audio) {
             audio = document.createElement('audio');
@@ -1520,3 +1620,227 @@ imageModal.addEventListener('click', (e) => {
         imageModal.classList.remove('active');
     }
 });
+
+// Görüntülü Arama & Ekran Paylaşımı İşlemleri
+btnCamera.addEventListener('click', async () => {
+    if (isSharingCamera) {
+        stopCameraShare();
+    } else {
+        await startCameraShare();
+    }
+});
+
+btnScreenshare.addEventListener('click', async () => {
+    if (isSharingScreen) {
+        stopScreenShare();
+    } else {
+        await startScreenShare();
+    }
+});
+
+btnFullscreenShare.addEventListener('click', () => {
+    if (screenshareVideo.requestFullscreen) {
+        screenshareVideo.requestFullscreen();
+    } else if (screenshareVideo.webkitRequestFullscreen) {
+        screenshareVideo.webkitRequestFullscreen();
+    }
+});
+
+async function startCameraShare() {
+    try {
+        log("Kamera paylaşımı başlatılıyor...");
+        localCameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 20 }
+            },
+            audio: false // Ses zaten mikrofon akışı (localStream) tarafından yönetiliyor
+        });
+
+        isSharingCamera = true;
+        btnCamera.classList.add('active');
+
+        // Yerel görüntüyü ızgaraya ekle
+        createOrUpdateRemoteVideoElement(myConnectionId, localCameraStream, true);
+
+        // Sunucuyu bilgilendir
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+            await connection.invoke("ToggleCameraShare", true);
+        }
+
+        // Bağlantıları tazele
+        reconnectAllPeers();
+        updateVideoLayout();
+
+    } catch (err) {
+        console.error("Kamera açılamadı:", err);
+        appendSystemMessage("Kamera açılamadı: " + err.message);
+        isSharingCamera = false;
+        btnCamera.classList.remove('active');
+    }
+}
+
+function stopCameraShare() {
+    if (!isSharingCamera) return;
+    log("Kamera paylaşımı durduruluyor...");
+
+    isSharingCamera = false;
+    btnCamera.classList.remove('active');
+
+    if (localCameraStream) {
+        localCameraStream.getTracks().forEach(track => track.stop());
+        localCameraStream = null;
+    }
+
+    removeRemoteVideoElement(myConnectionId);
+
+    if (connection && connection.state === signalR.HubConnectionState.Connected) {
+        connection.invoke("ToggleCameraShare", false).catch(err => console.error(err));
+    }
+
+    reconnectAllPeers();
+    updateVideoLayout();
+}
+
+async function startScreenShare() {
+    try {
+        log("Ekran paylaşımı başlatılıyor...");
+        localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+                frameRate: { ideal: 30 }
+            },
+            audio: false
+        });
+
+        isSharingScreen = true;
+        btnScreenshare.classList.add('active');
+
+        // Tarayıcı/Sistem ekran paylaşımı durduruldu butonuna basarsa yakala
+        localScreenStream.getVideoTracks()[0].onended = () => {
+            stopScreenShare();
+        };
+
+        // Kendi ekran paylaşımımızı ekranda göster
+        screenshareVideo.srcObject = localScreenStream;
+        screenshareUsername.textContent = "Ekranınızı paylaşıyorsunuz";
+        screenshareContainer.style.display = 'flex';
+        activeScreenSharerId = myConnectionId;
+
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+            await connection.invoke("ToggleScreenShare", true);
+        }
+
+        reconnectAllPeers();
+        updateVideoLayout();
+
+    } catch (err) {
+        console.error("Ekran paylaşımı başlatılamadı:", err);
+        isSharingScreen = false;
+        btnScreenshare.classList.remove('active');
+    }
+}
+
+function stopScreenShare() {
+    if (!isSharingScreen) return;
+    log("Ekran paylaşımı durduruluyor...");
+
+    isSharingScreen = false;
+    btnScreenshare.classList.remove('active');
+
+    if (localScreenStream) {
+        localScreenStream.getTracks().forEach(track => track.stop());
+        localScreenStream = null;
+    }
+
+    if (activeScreenSharerId === myConnectionId) {
+        activeScreenSharerId = null;
+        screenshareContainer.style.display = 'none';
+        screenshareVideo.srcObject = null;
+    }
+
+    if (connection && connection.state === signalR.HubConnectionState.Connected) {
+        connection.invoke("ToggleScreenShare", false).catch(err => console.error(err));
+    }
+
+    reconnectAllPeers();
+    updateVideoLayout();
+}
+
+// Ekran ve kamera durumları değiştiğinde tüm peer'ları yeniden bağlar (Mesh renegotiation)
+function reconnectAllPeers() {
+    log("Tüm webrtc kanalları güncelleniyor, peer'lar yeniden bağlanıyor...");
+    const peers = Object.keys(peerConnections);
+    peers.forEach(peerId => {
+        closePeerConnection(peerId);
+        initiateCall(peerId);
+    });
+}
+
+// Dinamik Video Izgarası (Grid) Yönetim Fonksiyonları
+function createOrUpdateRemoteVideoElement(connectionId, stream, isLocal = false) {
+    let videoCard = document.getElementById(`videocard-${connectionId}`);
+    if (!videoCard) {
+        videoCard = document.createElement('div');
+        videoCard.className = 'video-card';
+        videoCard.id = `videocard-${connectionId}`;
+
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.playsInline = true;
+        if (isLocal) {
+            video.muted = true; // Kendi sesimizin yankı yapmasını önler
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'video-card-overlay';
+        overlay.textContent = isLocal ? "Siz" : (peerConnections[connectionId]?.remoteUsername || "Katılımcı");
+
+        videoCard.appendChild(video);
+        videoCard.appendChild(overlay);
+        videoGridContainer.appendChild(videoCard);
+    }
+
+    const videoEl = videoCard.querySelector('video');
+    if (videoEl && videoEl.srcObject !== stream) {
+        videoEl.srcObject = stream;
+    }
+}
+
+function removeRemoteVideoElement(connectionId) {
+    const videoCard = document.getElementById(`videocard-${connectionId}`);
+    if (videoCard) {
+        const videoEl = videoCard.querySelector('video');
+        if (videoEl) videoEl.srcObject = null;
+        videoCard.remove();
+    }
+}
+
+// Video Arayüzünün Duruma Göre Şekillenmesi (Grid vs Row)
+function updateVideoLayout() {
+    const hasActiveCamera = isSharingCamera || Object.values(peerConnections).some(pc => pc.isSharingCamera);
+    const hasActiveScreenShare = activeScreenSharerId !== null;
+
+    if (!hasActiveCamera && !hasActiveScreenShare) {
+        videoGridContainer.style.display = 'none';
+        screenshareContainer.style.display = 'none';
+        return;
+    }
+
+    if (hasActiveScreenShare) {
+        screenshareContainer.style.display = 'flex';
+        
+        if (hasActiveCamera) {
+            videoGridContainer.style.display = 'flex';
+            videoGridContainer.className = 'video-grid-container row-layout';
+        } else {
+            videoGridContainer.style.display = 'none';
+        }
+    } else {
+        screenshareContainer.style.display = 'none';
+        videoGridContainer.style.display = 'grid';
+        videoGridContainer.className = 'video-grid-container grid-only';
+    }
+}

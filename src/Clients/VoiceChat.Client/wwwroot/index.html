@@ -124,6 +124,12 @@
                         <button id="btn-deafen" class="control-btn" title="Hoparlörü Kapat/Aç">
                             <i class="fa-solid fa-headphones"></i>
                         </button>
+                        <button id="btn-camera" class="control-btn" title="Kamerayı Aç/Kapat">
+                            <i class="fa-solid fa-video"></i>
+                        </button>
+                        <button id="btn-screenshare" class="control-btn" title="Ekran Paylaşımı Başlat/Durdur">
+                            <i class="fa-solid fa-desktop"></i>
+                        </button>
                         <button id="btn-disconnect" class="control-btn danger" title="Bağlantıyı Kes">
                             <i class="fa-solid fa-phone-slash"></i>
                         </button>
@@ -145,8 +151,24 @@
                 </div>
                 
                 <div class="main-layout">
-                    <!-- Sol Panel: Ses Arayüzü -->
-                    <div class="voice-dashboard">
+                    <!-- Sol Panel: Video ve Ses Alanı -->
+                    <div class="video-workspace" id="video-workspace">
+                        <!-- Ekran Paylaşım Ekranı -->
+                        <div class="screenshare-container" id="screenshare-container" style="display: none;">
+                            <video id="screenshare-video" autoplay playsinline></video>
+                            <div class="screenshare-overlay">
+                                <span id="screenshare-username">Ekran Paylaşımı</span>
+                                <button id="btn-fullscreen-share" title="Tam Ekran"><i class="fa-solid fa-expand"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Görüntülü Arama Izgarası -->
+                        <div class="video-grid-container" id="video-grid-container" style="display: none;">
+                            <!-- Dinamik video kartları buraya eklenecek -->
+                        </div>
+
+                        <!-- Ses Arayüzü Dashboard -->
+                        <div class="voice-dashboard" id="voice-dashboard">
                         <div class="central-mic">
                             <div class="wave-circle ring-3"></div>
                             <div class="wave-circle ring-2"></div>
@@ -183,6 +205,7 @@
                             <div class="mic-status" id="mic-status-text">MİKROFON KAPALI</div>
                         </div>
                     </div>
+                    </div> <!-- video-workspace sonu -->
 
                     <div class="chat-panel" id="chat-panel">
                         <!-- Sürükle Bırak Görsel Overlay'i -->

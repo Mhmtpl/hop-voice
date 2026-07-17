@@ -78,6 +78,26 @@ namespace VoiceChatService.Hubs
             }
         }
 
+        public async Task ToggleCameraShare(bool isSharing)
+        {
+            string connectionId = Context.ConnectionId;
+            if (UserRooms.TryGetValue(connectionId, out var roomId) && Usernames.TryGetValue(connectionId, out var username))
+            {
+                _logger.LogInformation("Kamera paylaşım durumu değişti: {Username} ({ConnectionId}) -> {RoomId} : {IsSharing}", username, connectionId, roomId, isSharing);
+                await Clients.Group(roomId).SendAsync("OnCameraShareToggled", connectionId, username, isSharing);
+            }
+        }
+
+        public async Task ToggleScreenShare(bool isSharing)
+        {
+            string connectionId = Context.ConnectionId;
+            if (UserRooms.TryGetValue(connectionId, out var roomId) && Usernames.TryGetValue(connectionId, out var username))
+            {
+                _logger.LogInformation("Ekran paylaşım durumu değişti: {Username} ({ConnectionId}) -> {RoomId} : {IsSharing}", username, connectionId, roomId, isSharing);
+                await Clients.Group(roomId).SendAsync("OnScreenShareToggled", connectionId, username, isSharing);
+            }
+        }
+
         public async Task Ping()
         {
             await Clients.Caller.SendAsync("Pong");

@@ -1461,5 +1461,172 @@ body {
     transform: scale(1.1);
 }
 
+/* Görüntülü Konuşma & Ekran Paylaşımı Arayüz Stilleri */
+.video-workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    background: radial-gradient(circle at center, #13141f 0%, #0d0e15 100%);
+    overflow: hidden;
+}
+
+.voice-dashboard {
+    background: transparent !important; /* Video-workspace arka planı üstte görünecek */
+}
+
+/* Ekran Paylaşım Paneli */
+.screenshare-container {
+    display: none;
+    flex: 2;
+    background: #000000;
+    border-bottom: 1px solid var(--glass-border);
+    position: relative;
+    min-height: 0;
+}
+
+#screenshare-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.screenshare-overlay {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(13, 9, 23, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10;
+}
+
+.screenshare-overlay button {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.screenshare-overlay button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Kamera Izgarası */
+.video-grid-container {
+    display: none;
+    padding: 15px;
+    background: rgba(13, 9, 23, 0.3);
+    border-bottom: 1px solid var(--glass-border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    gap: 15px;
+    box-sizing: border-box;
+}
+
+/* Sadece kamera açıkken ve ekran paylaşımı yokken grid görünümü */
+.video-grid-container.grid-only {
+    flex: 1;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-auto-rows: minmax(180px, 1fr);
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ekran paylaşımı varken kameraları alta/üste yatay şerit yapma */
+.video-grid-container.row-layout {
+    display: flex !important;
+    height: 140px;
+    max-height: 140px;
+    width: 100%;
+}
+
+.video-card {
+    position: relative;
+    background: rgba(20, 15, 30, 0.6);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4/3;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.video-grid-container.row-layout .video-card {
+    width: 160px;
+    height: 110px;
+    aspect-ratio: auto;
+    flex-shrink: 0;
+}
+
+.video-card:hover {
+    transform: scale(1.02);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.video-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000000;
+}
+
+.video-card-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(10, 8, 16, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+/* Buton Aktif Durum Işıltıları */
+#btn-camera.active {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    color: #10b981 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+
+#btn-screenshare.active {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border-color: rgba(139, 92, 246, 0.6) !important;
+    color: #a78bfa !important;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.25) !important;
+}
+
 
 

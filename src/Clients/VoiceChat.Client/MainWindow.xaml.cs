@@ -151,6 +151,17 @@ namespace VoiceChat.Client
                 // JavaScript'ten gelen mesajları dinle
                 webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
 
+                // WebView2 izin taleplerini (Mikrofon, Kamera, Ekran Paylaşımı) otomatik onayla
+                webView.CoreWebView2.PermissionRequested += (s, args) =>
+                {
+                    if (args.PermissionKind == CoreWebView2PermissionKind.Microphone ||
+                        args.PermissionKind == CoreWebView2PermissionKind.Camera)
+                    {
+                        args.State = CoreWebView2PermissionState.Allow;
+                        args.Handled = true;
+                    }
+                };
+
                 // Klavye dinleyicisini başlat
                 _keyboardHook.Hook();
             }

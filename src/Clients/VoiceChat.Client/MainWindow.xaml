@@ -6,7 +6,7 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:local="clr-namespace:VoiceChat.Client"
         mc:Ignorable="d"
-        Title="Hop" Height="650" Width="950"
+        Title="Hop" Height="780" Width="1200" MinHeight="680" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
         Background="#1E1E24">
     <Grid>

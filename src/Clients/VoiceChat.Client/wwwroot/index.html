@@ -70,89 +70,95 @@
                     </div>
                 </div>
 
-                <div class="channel-section">
-                    <div class="section-title">SES KANALLARI</div>
-                    <div class="channel-list">
-                        <div class="channel-item active">
-                            <i class="fa-solid fa-volume-high"></i>
-                            <span id="active-room-name">Genel</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Odadaki Kullanıcılar Listesi -->
-                <div class="members-section">
-                    <div class="section-title">ODADAKİLER</div>
-                    <div id="members-list" class="members-list">
-                        <!-- JS ile dolacak -->
-                    </div>
-                </div>
-
-                <!-- Cihaz Ayarları Bölümü -->
-                <div class="devices-section">
-                    <div class="section-title">CİHAZ AYARLARI</div>
-                    <div class="device-selectors">
-                        <div class="device-select-item">
-                            <i class="fa-solid fa-microphone text-muted" title="Mikrofon"></i>
-                            <select id="select-mic" class="device-dropdown">
-                                <option value="">Mikrofon Yükleniyor...</option>
-                            </select>
-                        </div>
-                        <div class="device-select-item">
-                            <i class="fa-solid fa-headphones text-muted" title="Kulaklık / Hoparlör"></i>
-                            <select id="select-speaker" class="device-dropdown">
-                                <option value="">Hoparlör Yükleniyor...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Bas-Konuş Sidebar Ayarları -->
-                    <div class="sidebar-ptt-settings">
-                        <div class="mode-toggle-container">
-                            <span class="mode-label">Bas-Konuş Modu</span>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="chk-ptt-mode" checked>
-                                <label for="chk-ptt-mode"></label>
+                <!-- Kaydırılabilir Orta Bölüm (Kanallar ve Üyeler) -->
+                <div class="sidebar-scroll-area">
+                    <div class="channel-section">
+                        <div class="section-title">SES KANALLARI</div>
+                        <div class="channel-list">
+                            <div class="channel-item active">
+                                <i class="fa-solid fa-volume-high"></i>
+                                <span id="active-room-name">Genel</span>
                             </div>
                         </div>
-                        <div class="shortcut-box" id="ptt-settings-area">
-                            <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
-                            <button id="btn-change-key" class="btn-small">Değiştir</button>
-                        </div>
-                        <div id="openmic-settings-area" style="display: none; font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
-                            Sürekli Açık (Open Mic) Aktif
+                    </div>
+
+                    <!-- Odadaki Kullanıcılar Listesi -->
+                    <div class="members-section">
+                        <div class="section-title">ODADAKİLER</div>
+                        <div id="members-list" class="members-list">
+                            <!-- JS ile dolacak -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Alt Profil Paneli -->
-                <div class="user-profile glass-light">
-                    <div class="user-profile-top">
-                        <div class="user-avatar-container">
-                            <div class="user-avatar" id="my-avatar">U</div>
-                            <div class="user-status-dot online"></div>
+                <!-- Sabit Alt Bölüm (Cihaz Ayarları ve Profil) -->
+                <div class="sidebar-footer-area">
+                    <!-- Cihaz Ayarları Bölümü -->
+                    <div class="devices-section">
+                        <div class="section-title">CİHAZ AYARLARI</div>
+                        <div class="device-selectors">
+                            <div class="device-select-item">
+                                <i class="fa-solid fa-microphone text-muted" title="Mikrofon"></i>
+                                <select id="select-mic" class="device-dropdown">
+                                    <option value="">Mikrofon Yükleniyor...</option>
+                                </select>
+                            </div>
+                            <div class="device-select-item">
+                                <i class="fa-solid fa-headphones text-muted" title="Kulaklık / Hoparlör"></i>
+                                <select id="select-speaker" class="device-dropdown">
+                                    <option value="">Hoparlör Yükleniyor...</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="user-details">
-                            <span id="my-username" class="username">Kullanıcı</span>
-                            <span class="status-text">Bağlandı</span>
+
+                        <!-- Bas-Konuş Sidebar Ayarları -->
+                        <div class="sidebar-ptt-settings">
+                            <div class="mode-toggle-container">
+                                <span class="mode-label">Bas-Konuş Modu</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="chk-ptt-mode" checked>
+                                    <label for="chk-ptt-mode"></label>
+                                </div>
+                            </div>
+                            <div class="shortcut-box" id="ptt-settings-area">
+                                <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
+                                <button id="btn-change-key" class="btn-small">Değiştir</button>
+                            </div>
+                            <div id="openmic-settings-area" style="display: none; font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                                Sürekli Açık (Open Mic) Aktif
+                            </div>
                         </div>
                     </div>
-                    <div class="user-controls">
-                        <button id="btn-mute" class="control-btn" title="Mikrofonu Kapat/Aç">
-                            <i class="fa-solid fa-microphone"></i>
-                        </button>
-                        <button id="btn-deafen" class="control-btn" title="Hoparlörü Kapat/Aç">
-                            <i class="fa-solid fa-headphones"></i>
-                        </button>
-                        <button id="btn-camera" class="control-btn" title="Kamerayı Aç/Kapat">
-                            <i class="fa-solid fa-video"></i>
-                        </button>
-                        <button id="btn-screenshare" class="control-btn" title="Ekran Paylaşımı Başlat/Durdur">
-                            <i class="fa-solid fa-desktop"></i>
-                        </button>
-                        <button id="btn-disconnect" class="control-btn danger" title="Bağlantıyı Kes">
-                            <i class="fa-solid fa-phone-slash"></i>
-                        </button>
+
+                    <!-- Alt Profil Paneli -->
+                    <div class="user-profile glass-light">
+                        <div class="user-profile-top">
+                            <div class="user-avatar-container">
+                                <div class="user-avatar" id="my-avatar">U</div>
+                                <div class="user-status-dot online"></div>
+                            </div>
+                            <div class="user-details">
+                                <span id="my-username" class="username">Kullanıcı</span>
+                                <span class="status-text">Bağlandı</span>
+                            </div>
+                        </div>
+                        <div class="user-controls">
+                            <button id="btn-mute" class="control-btn" title="Mikrofonu Kapat/Aç">
+                                <i class="fa-solid fa-microphone"></i>
+                            </button>
+                            <button id="btn-deafen" class="control-btn" title="Hoparlörü Kapat/Aç">
+                                <i class="fa-solid fa-headphones"></i>
+                            </button>
+                            <button id="btn-camera" class="control-btn" title="Kamerayı Aç/Kapat">
+                                <i class="fa-solid fa-video"></i>
+                            </button>
+                            <button id="btn-screenshare" class="control-btn" title="Ekran Paylaşımı Başlat/Durdur">
+                                <i class="fa-solid fa-desktop"></i>
+                            </button>
+                            <button id="btn-disconnect" class="control-btn danger" title="Bağlantıyı Kes">
+                                <i class="fa-solid fa-phone-slash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

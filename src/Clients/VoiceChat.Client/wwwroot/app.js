@@ -66,6 +66,8 @@ let isSharingScreen = false;
 let localCameraStream = null;
 let localScreenStream = null;
 let activeScreenSharerId = null; // Ekran paylaşan peer'ın connectionId'si
+let remoteCameraStreamIds = {};  // connectionId -> streamId eşleşmesi
+let remoteScreenStreamIds = {};  // connectionId -> streamId eşleşmesi
 
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
@@ -276,26 +278,33 @@ async function connectToVoiceChat() {
             closePeerConnection(connectionId);
         });
 
-        connection.on("OnCameraShareToggled", (sharingUserId, username, isSharing) => {
-            log(`Kamera paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}`);
-            if (peerConnections[sharingUserId]) {
-                peerConnections[sharingUserId].isSharingCamera = isSharing;
-            }
+        connection.on("OnCameraShareToggled", (sharingUserId, username, isSharing, streamId) => {
+            log(`Kamera paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}, Stream: ${streamId}`);
             if (isSharing) {
+                remoteCameraStreamIds[sharingUserId] = streamId;
+                if (peerConnections[sharingUserId]) {
+                    peerConnections[sharingUserId].isSharingCamera = true;
+                }
                 closePeerConnection(sharingUserId);
             } else {
+                delete remoteCameraStreamIds[sharingUserId];
                 removeRemoteVideoElement(sharingUserId);
+                if (peerConnections[sharingUserId]) {
+                    peerConnections[sharingUserId].isSharingCamera = false;
+                }
                 closePeerConnection(sharingUserId);
             }
             updateVideoLayout();
         });
 
-        connection.on("OnScreenShareToggled", (sharingUserId, username, isSharing) => {
-            log(`Ekran paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}`);
+        connection.on("OnScreenShareToggled", (sharingUserId, username, isSharing, streamId) => {
+            log(`Ekran paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}, Stream: ${streamId}`);
             if (isSharing) {
+                remoteScreenStreamIds[sharingUserId] = streamId;
                 activeScreenSharerId = sharingUserId;
                 closePeerConnection(sharingUserId);
             } else {
+                delete remoteScreenStreamIds[sharingUserId];
                 if (activeScreenSharerId === sharingUserId) {
                     activeScreenSharerId = null;
                     screenshareContainer.style.display = 'none';
@@ -496,14 +505,15 @@ function createPeerConnection(targetConnectionId, isInitiator) {
     // Karşı tarafın sesi veya görüntüsü geldiğinde
     pc.ontrack = (event) => {
         const remoteStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+        const streamId = event.streams && event.streams[0] ? event.streams[0].id : null;
 
         // Video Kanalı Algılama (Kamera veya Ekran Paylaşımı)
         if (event.track.kind === 'video') {
-            log(`Video track alındı, Hedef: ${targetConnectionId}`);
+            log(`Video track alındı, Hedef: ${targetConnectionId}, StreamID: ${streamId}`);
             
-            // Ekran paylaşımı olup olmadığını algıla (displaySurface ayarı varsa ekran paylaşımıdır)
-            const settings = event.track.getSettings();
-            const isScreenShare = !!settings.displaySurface;
+            // Stream ID eşleşmesine göre ekran paylaşımı olup olmadığını doğrula
+            const isScreenShare = (streamId && streamId === remoteScreenStreamIds[targetConnectionId]) || 
+                                  (targetConnectionId === myConnectionId && localScreenStream && streamId === localScreenStream.id);
 
             if (isScreenShare) {
                 screenshareVideo.srcObject = remoteStream;
@@ -668,6 +678,15 @@ function startAudioAnalysis(connectionId, stream) {
                 }
             }
 
+            const videoCard = document.getElementById(`videocard-${connectionId}`);
+            if (videoCard) {
+                if (isSpeaking) {
+                    videoCard.classList.add('speaking');
+                } else {
+                    videoCard.classList.remove('speaking');
+                }
+            }
+
             requestAnimationFrame(checkVolume);
         }
         checkVolume();
@@ -717,6 +736,15 @@ function startLocalAudioAnalysis() {
                 } else {
                     myMemberEl.classList.remove('speaking');
                     centralMic.classList.remove('speaking');
+                }
+            }
+
+            const myVideoCard = document.getElementById(`videocard-${myConnectionId}`);
+            if (myVideoCard) {
+                if (isSpeaking) {
+                    myVideoCard.classList.add('speaking');
+                } else {
+                    myVideoCard.classList.remove('speaking');
                 }
             }
 
@@ -1664,9 +1692,9 @@ async function startCameraShare() {
         // Yerel görüntüyü ızgaraya ekle
         createOrUpdateRemoteVideoElement(myConnectionId, localCameraStream, true);
 
-        // Sunucuyu bilgilendir
+        // Sunucuyu bilgilendir (Stream ID'yi de iletiyoruz)
         if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            await connection.invoke("ToggleCameraShare", true);
+            await connection.invoke("ToggleCameraShare", true, localCameraStream.id);
         }
 
         // Bağlantıları tazele
@@ -1696,7 +1724,7 @@ function stopCameraShare() {
     removeRemoteVideoElement(myConnectionId);
 
     if (connection && connection.state === signalR.HubConnectionState.Connected) {
-        connection.invoke("ToggleCameraShare", false).catch(err => console.error(err));
+        connection.invoke("ToggleCameraShare", false, null).catch(err => console.error(err));
     }
 
     reconnectAllPeers();
@@ -1730,7 +1758,7 @@ async function startScreenShare() {
         activeScreenSharerId = myConnectionId;
 
         if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            await connection.invoke("ToggleScreenShare", true);
+            await connection.invoke("ToggleScreenShare", true, localScreenStream.id);
         }
 
         reconnectAllPeers();
@@ -1762,7 +1790,7 @@ function stopScreenShare() {
     }
 
     if (connection && connection.state === signalR.HubConnectionState.Connected) {
-        connection.invoke("ToggleScreenShare", false).catch(err => console.error(err));
+        connection.invoke("ToggleScreenShare", false, null).catch(err => console.error(err));
     }
 
     reconnectAllPeers();
@@ -1822,11 +1850,20 @@ function removeRemoteVideoElement(connectionId) {
 function updateVideoLayout() {
     const hasActiveCamera = isSharingCamera || Object.values(peerConnections).some(pc => pc.isSharingCamera);
     const hasActiveScreenShare = activeScreenSharerId !== null;
+    const voiceDashboard = document.getElementById('voice-dashboard');
 
     if (!hasActiveCamera && !hasActiveScreenShare) {
         videoGridContainer.style.display = 'none';
         screenshareContainer.style.display = 'none';
+        if (voiceDashboard) {
+            voiceDashboard.style.display = 'flex';
+        }
         return;
+    }
+
+    // Video aktifse ses dashboard'unu (mikrofon dalgalarını vs.) gizleyelim ki yer açsın
+    if (voiceDashboard) {
+        voiceDashboard.style.display = 'none';
     }
 
     if (hasActiveScreenShare) {

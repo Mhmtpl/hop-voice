@@ -1480,10 +1480,14 @@ body {
 .screenshare-container {
     display: none;
     flex: 2;
-    background: #000000;
-    border-bottom: 1px solid var(--glass-border);
+    background: #09060f;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    margin: 15px 15px 0 15px;
     position: relative;
     min-height: 0;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 #screenshare-video {
@@ -1534,14 +1538,8 @@ body {
 /* Kamera Izgarası */
 .video-grid-container {
     display: none;
-    padding: 15px;
-    background: rgba(13, 9, 23, 0.3);
-    border-bottom: 1px solid var(--glass-border);
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex-shrink: 0;
-    gap: 15px;
     box-sizing: border-box;
+    z-index: 5;
 }
 
 /* Sadece kamera açıkken ve ekran paylaşımı yokken grid görünümü */
@@ -1554,6 +1552,11 @@ body {
     overflow-x: hidden;
     align-items: center;
     justify-content: center;
+    margin: 15px;
+    padding: 0;
+    gap: 15px;
+    background: transparent;
+    border: none;
 }
 
 /* Ekran paylaşımı varken kameraları alta/üste yatay şerit yapma */
@@ -1561,21 +1564,29 @@ body {
     display: flex !important;
     height: 140px;
     max-height: 140px;
-    width: 100%;
+    width: calc(100% - 30px);
+    margin: 15px;
+    padding: 0;
+    gap: 15px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
 }
 
 .video-card {
     position: relative;
     background: rgba(20, 15, 30, 0.6);
-    border: 1px solid var(--glass-border);
+    border: 2px solid var(--glass-border);
     border-radius: 12px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     aspect-ratio: 4/3;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .video-grid-container.row-layout .video-card {
@@ -1588,6 +1599,12 @@ body {
 .video-card:hover {
     transform: scale(1.02);
     border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Konuşma Durumunda Yeşil Parlama Efekti */
+.video-card.speaking {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.45) !important;
 }
 
 .video-card video {

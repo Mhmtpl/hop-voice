@@ -78,23 +78,23 @@ namespace VoiceChatService.Hubs
             }
         }
 
-        public async Task ToggleCameraShare(bool isSharing)
+        public async Task ToggleCameraShare(bool isSharing, string streamId)
         {
             string connectionId = Context.ConnectionId;
             if (UserRooms.TryGetValue(connectionId, out var roomId) && Usernames.TryGetValue(connectionId, out var username))
             {
-                _logger.LogInformation("Kamera paylaşım durumu değişti: {Username} ({ConnectionId}) -> {RoomId} : {IsSharing}", username, connectionId, roomId, isSharing);
-                await Clients.Group(roomId).SendAsync("OnCameraShareToggled", connectionId, username, isSharing);
+                _logger.LogInformation("Kamera paylaşım durumu değişti: {Username} ({ConnectionId}) -> {RoomId} : {IsSharing} (Stream: {StreamId})", username, connectionId, roomId, isSharing, streamId);
+                await Clients.Group(roomId).SendAsync("OnCameraShareToggled", connectionId, username, isSharing, streamId);
             }
         }
 
-        public async Task ToggleScreenShare(bool isSharing)
+        public async Task ToggleScreenShare(bool isSharing, string streamId)
         {
             string connectionId = Context.ConnectionId;
             if (UserRooms.TryGetValue(connectionId, out var roomId) && Usernames.TryGetValue(connectionId, out var username))
             {
-                _logger.LogInformation("Ekran paylaşım durumu değişti: {Username} ({ConnectionId}) -> {RoomId} : {IsSharing}", username, connectionId, roomId, isSharing);
-                await Clients.Group(roomId).SendAsync("OnScreenShareToggled", connectionId, username, isSharing);
+                _logger.LogInformation("Ekran paylaşım durumu değişti: {Username} ({ConnectionId}) -> {RoomId} : {IsSharing} (Stream: {StreamId})", username, connectionId, roomId, isSharing, streamId);
+                await Clients.Group(roomId).SendAsync("OnScreenShareToggled", connectionId, username, isSharing, streamId);
             }
         }
 

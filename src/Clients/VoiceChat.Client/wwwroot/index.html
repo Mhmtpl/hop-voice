@@ -92,45 +92,8 @@
                     </div>
                 </div>
 
-                <!-- Sabit Alt Bölüm (Cihaz Ayarları ve Profil) -->
+                <!-- Sabit Alt Bölüm (Profil ve Ayarlar) -->
                 <div class="sidebar-footer-area">
-                    <!-- Cihaz Ayarları Bölümü -->
-                    <div class="devices-section">
-                        <div class="section-title">CİHAZ AYARLARI</div>
-                        <div class="device-selectors">
-                            <div class="device-select-item">
-                                <i class="fa-solid fa-microphone text-muted" title="Mikrofon"></i>
-                                <select id="select-mic" class="device-dropdown">
-                                    <option value="">Mikrofon Yükleniyor...</option>
-                                </select>
-                            </div>
-                            <div class="device-select-item">
-                                <i class="fa-solid fa-headphones text-muted" title="Kulaklık / Hoparlör"></i>
-                                <select id="select-speaker" class="device-dropdown">
-                                    <option value="">Hoparlör Yükleniyor...</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Bas-Konuş Sidebar Ayarları -->
-                        <div class="sidebar-ptt-settings">
-                            <div class="mode-toggle-container">
-                                <span class="mode-label">Bas-Konuş Modu</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="chk-ptt-mode" checked>
-                                    <label for="chk-ptt-mode"></label>
-                                </div>
-                            </div>
-                            <div class="shortcut-box" id="ptt-settings-area">
-                                <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
-                                <button id="btn-change-key" class="btn-small">Değiştir</button>
-                            </div>
-                            <div id="openmic-settings-area" style="display: none; font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
-                                Sürekli Açık (Open Mic) Aktif
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Alt Profil Paneli -->
                     <div class="user-profile glass-light">
                         <div class="user-profile-top">
@@ -142,6 +105,9 @@
                                 <span id="my-username" class="username">Kullanıcı</span>
                                 <span class="status-text">Bağlandı</span>
                             </div>
+                            <button id="btn-settings" class="profile-settings-btn" title="Ayarlar">
+                                <i class="fa-solid fa-gear"></i>
+                            </button>
                         </div>
                         <div class="user-controls">
                             <button id="btn-mute" class="control-btn" title="Mikrofonu Kapat/Aç">
@@ -247,6 +213,57 @@
     <!-- Ses Elementlerinin Tutulacağı Gizli Bölüm (display: none yapmıyoruz çünkü tarayıcı sesi askıya alabilir) -->
     <div id="audio-container" style="position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none;"></div>
 
+
+    <!-- Ayarlar Modalı -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="settings-card glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gear"></i> Ayarlar</h3>
+                <button id="btn-close-settings" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <!-- Ses Cihazları -->
+                <div class="settings-group">
+                    <h4><i class="fa-solid fa-sliders"></i> Ses Cihazları</h4>
+                    <div class="settings-item">
+                        <label for="select-mic"><i class="fa-solid fa-microphone"></i> Giriş Cihazı (Mikrofon)</label>
+                        <select id="select-mic" class="device-dropdown">
+                            <option value="">Mikrofon Yükleniyor...</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="select-speaker"><i class="fa-solid fa-headphones"></i> Çıkış Cihazı (Hoparlör)</label>
+                        <select id="select-speaker" class="device-dropdown">
+                            <option value="">Hoparlör Yükleniyor...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Bas-Konuş Ayarları -->
+                <div class="settings-group">
+                    <h4><i class="fa-solid fa-keyboard"></i> Ses İletim Ayarları</h4>
+                    <div class="settings-item-row">
+                        <span class="settings-label">Bas-Konuş Modunu Aktifleştir</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="chk-ptt-mode" checked>
+                            <label for="chk-ptt-mode"></label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-item" id="ptt-key-container">
+                        <label>Kısayol Tuşu</label>
+                        <div class="shortcut-setting-row">
+                            <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
+                            <button id="btn-change-key" class="btn-primary btn-small">Değiştir</button>
+                        </div>
+                    </div>
+                    <div id="openmic-settings-area" style="display: none; font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 5px;">
+                        <i class="fa-solid fa-circle-info"></i> Sürekli Açık (Open Mic) Aktif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- SignalR Client -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>

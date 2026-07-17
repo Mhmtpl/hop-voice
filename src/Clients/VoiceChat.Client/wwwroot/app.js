@@ -26,7 +26,7 @@ const latencyIndicator = document.getElementById('latency-indicator');
 
 // Mod Seçimi Elementleri
 const chkPttMode = document.getElementById('chk-ptt-mode');
-const pttSettingsArea = document.getElementById('ptt-settings-area');
+const pttKeyContainer = document.getElementById('ptt-key-container');
 const openmicSettingsArea = document.getElementById('openmic-settings-area');
 
 // Mikrofon Testi Elementleri
@@ -46,6 +46,9 @@ const chatFileInput = document.getElementById('chat-file-input');
 const imageModal = document.getElementById('image-modal');
 const modalImg = document.getElementById('modal-img');
 const closeImageViewer = document.getElementById('close-image-viewer');
+const btnSettings = document.getElementById('btn-settings');
+const settingsModal = document.getElementById('settings-modal');
+const btnCloseSettings = document.getElementById('btn-close-settings');
 const chatDragOverlay = document.getElementById('chat-drag-overlay');
 const chatPreviewArea = document.getElementById('chat-preview-area');
 const chatPreviewImg = document.getElementById('chat-preview-img');
@@ -1252,11 +1255,11 @@ chkPttMode.addEventListener('change', () => {
     isPttMode = chkPttMode.checked;
     
     if (isPttMode) {
-        pttSettingsArea.style.display = 'block';
+        pttKeyContainer.style.display = 'block';
         openmicSettingsArea.style.display = 'none';
         setPushToTalkState(false);
     } else {
-        pttSettingsArea.style.display = 'none';
+        pttKeyContainer.style.display = 'none';
         openmicSettingsArea.style.display = 'block';
         isPttActive = false;
         
@@ -1664,6 +1667,21 @@ closeImageViewer.addEventListener('click', () => {
 imageModal.addEventListener('click', (e) => {
     if (e.target === imageModal || e.target === closeImageViewer) {
         imageModal.classList.remove('active');
+    }
+});
+
+// Ayarlar Modalı Dinleyicileri
+btnSettings.addEventListener('click', () => {
+    settingsModal.classList.add('active');
+});
+
+btnCloseSettings.addEventListener('click', () => {
+    settingsModal.classList.remove('active');
+});
+
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+        settingsModal.classList.remove('active');
     }
 });
 

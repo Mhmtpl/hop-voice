@@ -105,17 +105,37 @@
                             </select>
                         </div>
                     </div>
+
+                    <!-- Bas-Konuş Sidebar Ayarları -->
+                    <div class="sidebar-ptt-settings">
+                        <div class="mode-toggle-container">
+                            <span class="mode-label">Bas-Konuş Modu</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="chk-ptt-mode" checked>
+                                <label for="chk-ptt-mode"></label>
+                            </div>
+                        </div>
+                        <div class="shortcut-box" id="ptt-settings-area">
+                            <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
+                            <button id="btn-change-key" class="btn-small">Değiştir</button>
+                        </div>
+                        <div id="openmic-settings-area" style="display: none; font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                            Sürekli Açık (Open Mic) Aktif
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Alt Profil Paneli -->
                 <div class="user-profile glass-light">
-                    <div class="user-avatar-container">
-                        <div class="user-avatar" id="my-avatar">U</div>
-                        <div class="user-status-dot online"></div>
-                    </div>
-                    <div class="user-details">
-                        <span id="my-username" class="username">Kullanıcı</span>
-                        <span class="status-text">Bağlandı</span>
+                    <div class="user-profile-top">
+                        <div class="user-avatar-container">
+                            <div class="user-avatar" id="my-avatar">U</div>
+                            <div class="user-status-dot online"></div>
+                        </div>
+                        <div class="user-details">
+                            <span id="my-username" class="username">Kullanıcı</span>
+                            <span class="status-text">Bağlandı</span>
+                        </div>
                     </div>
                     <div class="user-controls">
                         <button id="btn-mute" class="control-btn" title="Mikrofonu Kapat/Aç">
@@ -169,42 +189,16 @@
 
                         <!-- Ses Arayüzü Dashboard -->
                         <div class="voice-dashboard" id="voice-dashboard">
-                        <div class="central-mic">
-                            <div class="wave-circle ring-3"></div>
-                            <div class="wave-circle ring-2"></div>
-                            <div class="wave-circle ring-1"></div>
-                            <div class="mic-inner-circle" id="ptt-indicator-circle">
-                                <i class="fa-solid fa-microphone-lines"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="ptt-info-card glass">
-                            <div class="mode-toggle-container">
-                                <span class="mode-label">Bas-Konuş Aktif</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="chk-ptt-mode" checked>
-                                    <label for="chk-ptt-mode"></label>
+                            <div class="central-mic">
+                                <div class="wave-circle ring-3"></div>
+                                <div class="wave-circle ring-2"></div>
+                                <div class="wave-circle ring-1"></div>
+                                <div class="mic-inner-circle" id="ptt-indicator-circle">
+                                    <i class="fa-solid fa-microphone-lines"></i>
                                 </div>
                             </div>
-
-                            <div id="ptt-settings-area">
-                                <h3>Bas-Konuş Modu</h3>
-                                <p class="text-muted">Mikrofonunuzu açmak için tuşa basılı tutun.</p>
-                                <div class="shortcut-box">
-                                    <span class="label">Kısayol Tuşu:</span>
-                                    <span class="key-badge" id="ptt-key-display">Sol Ctrl</span>
-                                    <button id="btn-change-key" class="btn-small">Değiştir</button>
-                                </div>
-                            </div>
-
-                            <div id="openmic-settings-area" style="display: none;">
-                                <h3>Sürekli Açık (Open Mic)</h3>
-                                <p class="text-muted">Mikrofonunuz sürekli aktiftir. Susturmak için sol alttaki ikonu kullanabilirsiniz.</p>
-                            </div>
-
                             <div class="mic-status" id="mic-status-text">MİKROFON KAPALI</div>
                         </div>
-                    </div>
                     </div> <!-- video-workspace sonu -->
 
                     <div class="chat-panel" id="chat-panel">

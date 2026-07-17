@@ -47,6 +47,10 @@ const imageModal = document.getElementById('image-modal');
 const modalImg = document.getElementById('modal-img');
 const closeImageViewer = document.getElementById('close-image-viewer');
 const chatDragOverlay = document.getElementById('chat-drag-overlay');
+const chatPreviewArea = document.getElementById('chat-preview-area');
+const chatPreviewImg = document.getElementById('chat-preview-img');
+const btnCancelPreview = document.getElementById('btn-cancel-preview');
+let stagedImageBase64 = null;
 
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
@@ -1283,19 +1287,34 @@ btnToggleChat.addEventListener('click', () => {
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = chatInput.value.trim();
-    if (!message) return;
+
+    // Hem mesaj hem de görsel yoksa hiçbir şey yapma
+    if (!message && !stagedImageBase64) return;
 
     if (connection && connection.state === signalR.HubConnectionState.Connected) {
         try {
-            await connection.invoke("SendChatMessage", message);
-            chatInput.value = '';
+            // Önce önizlemedeki görseli gönder
+            if (stagedImageBase64) {
+                await connection.invoke("SendChatImage", stagedImageBase64);
+                // Önizlemeyi temizle
+                stagedImageBase64 = null;
+                chatPreviewImg.src = '';
+                chatPreviewArea.style.display = 'none';
+            }
+
+            // Varsa yazılı mesajı gönder
+            if (message) {
+                await connection.invoke("SendChatMessage", message);
+                chatInput.value = '';
+            }
+            
             chatInput.focus();
         } catch (err) {
-            console.error("Mesaj gönderilemedi:", err);
-            appendSystemMessage("Mesaj gönderilemedi: " + err.message);
+            console.error("Gönderim hatası:", err);
+            appendSystemMessage("Gönderilemedi: " + err.message);
         }
     } else {
-        appendSystemMessage("Bağlantı kesildi, mesaj gönderilemez.");
+        appendSystemMessage("Bağlantı kesildi, gönderim yapılamaz.");
     }
 });
 
@@ -1350,23 +1369,29 @@ chatFileInput.addEventListener('change', async (e) => {
     }
 
     chatFileInput.value = ''; // Inputu temizle
-    await handleImageUpload(file);
+    await stageImage(file);
 });
 
-// Resim Sıkıştırma ve Gönderme İşlemi (Ortak Fonksiyon)
-async function handleImageUpload(file) {
+// Görseli Gönderilmek Üzere Önizlemeye Alır (Staging)
+async function stageImage(file) {
     try {
         const compressedBase64 = await compressImage(file);
-        if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            await connection.invoke("SendChatImage", compressedBase64);
-        } else {
-            appendSystemMessage("Bağlantı kesildiği için resim gönderilemedi.");
-        }
+        stagedImageBase64 = compressedBase64;
+        chatPreviewImg.src = compressedBase64;
+        chatPreviewArea.style.display = 'flex';
+        chatInput.focus();
     } catch (err) {
-        console.error("Resim sıkıştırma/gönderme hatası:", err);
-        appendSystemMessage("Resim gönderilemedi: " + err.message);
+        console.error("Görsel hazırlama hatası:", err);
+        appendSystemMessage("Görsel hazırlanamadı: " + err.message);
     }
 }
+
+// Önizlemedeki Görseli Kaldır (İptal)
+btnCancelPreview.addEventListener('click', () => {
+    stagedImageBase64 = null;
+    chatPreviewImg.src = '';
+    chatPreviewArea.style.display = 'none';
+});
 
 // Kopyala-Yapıştır (Ctrl+V) Desteği
 chatInput.addEventListener('paste', async (e) => {
@@ -1376,7 +1401,7 @@ chatInput.addEventListener('paste', async (e) => {
             const file = item.getAsFile();
             if (file) {
                 e.preventDefault(); // Resim yapıştırıldığında inputa binary/metin basmasını önle
-                await handleImageUpload(file);
+                await stageImage(file);
             }
         }
     }
@@ -1411,7 +1436,7 @@ chatPanel.addEventListener('drop', async (e) => {
     if (files.length > 0) {
         const file = files[0];
         if (file.type.startsWith('image/')) {
-            await handleImageUpload(file);
+            await stageImage(file);
         } else {
             appendSystemMessage("Lütfen geçerli bir resim dosyası bırakın.");
         }

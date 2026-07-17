@@ -346,6 +346,7 @@ async function connectToVoiceChat() {
         // Odaya Katıl
         await connection.invoke("JoinRoom", currentRoom, myUsername);
         playChime(true);
+        showToast(`Ses odasına bağlanıldı: ${currentRoom}`, "success");
 
         // Ping-Pong gecikme testi başlat
         pingInterval = setInterval(async () => {
@@ -1466,12 +1467,29 @@ function appendChatMessage(senderId, senderName, text) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '<i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i>';
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i>';
+    if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark" style="color: #ef4444;"></i>';
+    if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i>';
+
+    toast.innerHTML = `${icon}<span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3600);
+}
+
 function appendSystemMessage(text) {
-    const msgEl = document.createElement('div');
-    msgEl.className = 'chat-message system';
-    msgEl.innerHTML = `<span class="message-content">${text}</span>`;
-    chatMessages.appendChild(msgEl);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Sistem uyarılarını chat listesine eklemek yerine daha şık bir Toast olarak gösteriyoruz.
+    showToast(text, 'warning');
 }
 
 function escapeHtml(str) {

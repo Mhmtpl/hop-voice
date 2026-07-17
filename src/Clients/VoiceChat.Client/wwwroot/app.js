@@ -46,6 +46,7 @@ const chatFileInput = document.getElementById('chat-file-input');
 const imageModal = document.getElementById('image-modal');
 const modalImg = document.getElementById('modal-img');
 const closeImageViewer = document.getElementById('close-image-viewer');
+const chatDragOverlay = document.getElementById('chat-drag-overlay');
 
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
@@ -1349,7 +1350,11 @@ chatFileInput.addEventListener('change', async (e) => {
     }
 
     chatFileInput.value = ''; // Inputu temizle
+    await handleImageUpload(file);
+});
 
+// Resim Sıkıştırma ve Gönderme İşlemi (Ortak Fonksiyon)
+async function handleImageUpload(file) {
     try {
         const compressedBase64 = await compressImage(file);
         if (connection && connection.state === signalR.HubConnectionState.Connected) {
@@ -1360,6 +1365,56 @@ chatFileInput.addEventListener('change', async (e) => {
     } catch (err) {
         console.error("Resim sıkıştırma/gönderme hatası:", err);
         appendSystemMessage("Resim gönderilemedi: " + err.message);
+    }
+}
+
+// Kopyala-Yapıştır (Ctrl+V) Desteği
+chatInput.addEventListener('paste', async (e) => {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+                e.preventDefault(); // Resim yapıştırıldığında inputa binary/metin basmasını önle
+                await handleImageUpload(file);
+            }
+        }
+    }
+});
+
+// Sürükle-Bırak (Drag-and-Drop) Desteği
+let dragCounter = 0; // Çocuk elemanların tetiklenmesinde overlay'in titreşmesini engellemek için guard
+
+chatPanel.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    chatDragOverlay.classList.add('active');
+});
+
+chatPanel.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+chatPanel.addEventListener('dragleave', (e) => {
+    dragCounter--;
+    if (dragCounter === 0) {
+        chatDragOverlay.classList.remove('active');
+    }
+});
+
+chatPanel.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    chatDragOverlay.classList.remove('active');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+            await handleImageUpload(file);
+        } else {
+            appendSystemMessage("Lütfen geçerli bir resim dosyası bırakın.");
+        }
     }
 });
 

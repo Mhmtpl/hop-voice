@@ -68,6 +68,16 @@ namespace VoiceChatService.Hubs
             }
         }
 
+        public async Task SendChatImage(string base64Data)
+        {
+            string connectionId = Context.ConnectionId;
+            if (UserRooms.TryGetValue(connectionId, out var roomId) && Usernames.TryGetValue(connectionId, out var username))
+            {
+                _logger.LogInformation("Görsel gönderildi: {Username} ({ConnectionId}) -> {RoomId}", username, connectionId, roomId);
+                await Clients.Group(roomId).SendAsync("ReceiveChatImage", connectionId, username, base64Data);
+            }
+        }
+
         public async Task Ping()
         {
             await Clients.Caller.SendAsync("Pong");

@@ -192,6 +192,8 @@
                             </div>
                         </div>
                         <form class="chat-input-area" id="chat-form">
+                            <input type="file" id="chat-file-input" accept="image/*" style="display: none;">
+                            <button type="button" id="btn-attach" title="Resim Gönder"><i class="fa-solid fa-paperclip"></i></button>
                             <input type="text" id="chat-input" placeholder="Mesaj gönder..." autocomplete="off">
                             <button type="submit" id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
                         </form>
@@ -199,6 +201,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Büyük Resim Görüntüleme Modalı -->
+    <div id="image-modal" class="image-viewer-modal">
+        <span class="close-viewer" id="close-image-viewer">&times;</span>
+        <img class="image-viewer-content" id="modal-img" alt="Zoomed view">
     </div>
 
     <!-- Ses Elementlerinin Tutulacağı Gizli Bölüm (display: none yapmıyoruz çünkü tarayıcı sesi askıya alabilir) -->

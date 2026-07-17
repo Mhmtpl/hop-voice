@@ -14,8 +14,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// SignalR Servisini ekle
-builder.Services.AddSignalR();
+// SignalR Servisini ekle (Resim gönderimi için limiti 5MB yapıyoruz)
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 5242880; // 5MB
+});
 
 var app = builder.Build();
 

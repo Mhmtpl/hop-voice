@@ -41,6 +41,11 @@ const chatPanel = document.getElementById('chat-panel');
 const chatMessages = document.getElementById('chat-messages');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
+const btnAttach = document.getElementById('btn-attach');
+const chatFileInput = document.getElementById('chat-file-input');
+const imageModal = document.getElementById('image-modal');
+const modalImg = document.getElementById('modal-img');
+const closeImageViewer = document.getElementById('close-image-viewer');
 
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
@@ -258,6 +263,10 @@ async function connectToVoiceChat() {
 
         connection.on("ReceiveChatMessage", (senderConnectionId, username, message) => {
             appendChatMessage(senderConnectionId, username, message);
+        });
+
+        connection.on("ReceiveChatImage", (senderConnectionId, username, base64Data) => {
+            appendChatImage(senderConnectionId, username, base64Data);
         });
 
         // Bağlantıyı Başlat
@@ -1324,3 +1333,112 @@ function escapeHtml(str) {
               .replace(/"/g, "&quot;")
               .replace(/'/g, "&#039;");
 }
+
+// Görsel Gönderim & Lightbox İşlemleri
+btnAttach.addEventListener('click', () => {
+    chatFileInput.click();
+});
+
+chatFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        appendSystemMessage("Lütfen geçerli bir resim dosyası seçin.");
+        return;
+    }
+
+    chatFileInput.value = ''; // Inputu temizle
+
+    appendSystemMessage("Resim sıkıştırılıyor...");
+
+    try {
+        const compressedBase64 = await compressImage(file);
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+            await connection.invoke("SendChatImage", compressedBase64);
+        } else {
+            appendSystemMessage("Bağlantı kesildiği için resim gönderilemedi.");
+        }
+    } catch (err) {
+        console.error("Resim sıkıştırma/gönderme hatası:", err);
+        appendSystemMessage("Resim gönderilemedi: " + err.message);
+    }
+});
+
+function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                const MAX_WIDTH = 1000;
+                const MAX_HEIGHT = 1000;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.75); // JPEG 0.75 Kalite Sıkıştırma
+                resolve(dataUrl);
+            };
+            img.onerror = (err) => reject(new Error("Görsel yüklenirken hata oluştu."));
+            img.src = event.target.result;
+        };
+        reader.onerror = (err) => reject(new Error("Dosya okunamadı."));
+        reader.readAsDataURL(file);
+    });
+}
+
+function appendChatImage(senderId, senderName, base64Data) {
+    const isMe = senderId === myConnectionId;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'chat-message' + (isMe ? ' me' : '');
+
+    msgEl.innerHTML = `
+        <div class="chat-message-meta">
+            <span class="chat-message-sender">${senderName}</span>
+            <span class="chat-message-time">${timeStr}</span>
+        </div>
+        <img src="${base64Data}" class="chat-message-image" alt="Shared photo">
+    `;
+
+    const img = msgEl.querySelector('.chat-message-image');
+    img.addEventListener('click', () => {
+        modalImg.src = base64Data;
+        imageModal.classList.add('active');
+    });
+
+    chatMessages.appendChild(msgEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+closeImageViewer.addEventListener('click', () => {
+    imageModal.classList.remove('active');
+});
+
+imageModal.addEventListener('click', (e) => {
+    if (e.target === imageModal || e.target === closeImageViewer) {
+        imageModal.classList.remove('active');
+    }
+});

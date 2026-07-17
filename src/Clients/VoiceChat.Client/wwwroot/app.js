@@ -1350,8 +1350,6 @@ chatFileInput.addEventListener('change', async (e) => {
 
     chatFileInput.value = ''; // Inputu temizle
 
-    appendSystemMessage("Resim sıkıştırılıyor...");
-
     try {
         const compressedBase64 = await compressImage(file);
         if (connection && connection.state === signalR.HubConnectionState.Connected) {

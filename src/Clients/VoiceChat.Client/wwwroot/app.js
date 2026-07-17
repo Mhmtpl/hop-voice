@@ -66,8 +66,8 @@ let isSharingScreen = false;
 let localCameraStream = null;
 let localScreenStream = null;
 let activeScreenSharerId = null; // Ekran paylaşan peer'ın connectionId'si
-let remoteCameraTrackIds = {};  // connectionId -> trackId eşleşmesi
-let remoteScreenTrackIds = {};  // connectionId -> trackId eşleşmesi
+let remoteCameraStreamIds = {};  // connectionId -> streamId eşleşmesi
+let remoteScreenStreamIds = {};  // connectionId -> streamId eşleşmesi
 
 // LocalStorage'tan son giriş bilgilerini geri yükle
 try {
@@ -278,16 +278,16 @@ async function connectToVoiceChat() {
             closePeerConnection(connectionId);
         });
 
-        connection.on("OnCameraShareToggled", (sharingUserId, username, isSharing, trackId) => {
-            log(`Kamera paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}, Track: ${trackId}`);
+        connection.on("OnCameraShareToggled", (sharingUserId, username, isSharing, streamId) => {
+            log(`Kamera paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}, Stream: ${streamId}`);
             if (isSharing) {
-                remoteCameraTrackIds[sharingUserId] = trackId;
+                remoteCameraStreamIds[sharingUserId] = streamId;
                 if (peerConnections[sharingUserId]) {
                     peerConnections[sharingUserId].isSharingCamera = true;
                 }
                 closePeerConnection(sharingUserId);
             } else {
-                delete remoteCameraTrackIds[sharingUserId];
+                delete remoteCameraStreamIds[sharingUserId];
                 removeRemoteVideoElement(sharingUserId);
                 if (peerConnections[sharingUserId]) {
                     peerConnections[sharingUserId].isSharingCamera = false;
@@ -297,14 +297,14 @@ async function connectToVoiceChat() {
             updateVideoLayout();
         });
 
-        connection.on("OnScreenShareToggled", (sharingUserId, username, isSharing, trackId) => {
-            log(`Ekran paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}, Track: ${trackId}`);
+        connection.on("OnScreenShareToggled", (sharingUserId, username, isSharing, streamId) => {
+            log(`Ekran paylaşım uyarısı: ${username} (${sharingUserId}) -> ${isSharing}, Stream: ${streamId}`);
             if (isSharing) {
-                remoteScreenTrackIds[sharingUserId] = trackId;
+                remoteScreenStreamIds[sharingUserId] = streamId;
                 activeScreenSharerId = sharingUserId;
                 closePeerConnection(sharingUserId);
             } else {
-                delete remoteScreenTrackIds[sharingUserId];
+                delete remoteScreenStreamIds[sharingUserId];
                 if (activeScreenSharerId === sharingUserId) {
                     activeScreenSharerId = null;
                     screenshareContainer.style.display = 'none';
@@ -506,15 +506,15 @@ function createPeerConnection(targetConnectionId, isInitiator) {
     // Karşı tarafın sesi veya görüntüsü geldiğinde
     pc.ontrack = (event) => {
         const remoteStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
-        const trackId = event.track.id;
+        const streamId = event.streams && event.streams[0] ? event.streams[0].id : null;
 
         // Video Kanalı Algılama (Kamera veya Ekran Paylaşımı)
         if (event.track.kind === 'video') {
-            log(`Video track alındı, Hedef: ${targetConnectionId}, TrackID: ${trackId}`);
+            log(`Video track alındı, Hedef: ${targetConnectionId}, StreamID: ${streamId}`);
             
-            // Track ID eşleşmesine göre ekran paylaşımı olup olmadığını doğrula
-            const isScreenShare = (trackId === remoteScreenTrackIds[targetConnectionId]) || 
-                                  (targetConnectionId === myConnectionId && localScreenStream && localScreenStream.getVideoTracks()[0] && trackId === localScreenStream.getVideoTracks()[0].id);
+            // Stream ID eşleşmesine göre ekran paylaşımı olup olmadığını doğrula
+            const isScreenShare = (streamId && streamId === remoteScreenStreamIds[targetConnectionId]) || 
+                                  (targetConnectionId === myConnectionId && localScreenStream && streamId === localScreenStream.id);
 
             if (isScreenShare) {
                 screenshareVideo.srcObject = remoteStream;
@@ -1710,10 +1710,9 @@ async function startCameraShare() {
         // Yerel görüntüyü ızgaraya ekle
         createOrUpdateRemoteVideoElement(myConnectionId, localCameraStream, true);
 
-        // Sunucuyu bilgilendir (Track ID'yi iletiyoruz)
+        // Sunucuyu bilgilendir (Stream ID'yi iletiyoruz)
         if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            const trackId = localCameraStream.getVideoTracks()[0].id;
-            await connection.invoke("ToggleCameraShare", true, trackId);
+            await connection.invoke("ToggleCameraShare", true, localCameraStream.id);
         }
 
         // Bağlantıları tazele
@@ -1777,8 +1776,7 @@ async function startScreenShare() {
         activeScreenSharerId = myConnectionId;
 
         if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            const trackId = localScreenStream.getVideoTracks()[0].id;
-            await connection.invoke("ToggleScreenShare", true, trackId);
+            await connection.invoke("ToggleScreenShare", true, localScreenStream.id);
         }
 
         reconnectAllPeers();

@@ -350,6 +350,7 @@ async function connectToVoiceChat() {
         await connection.invoke("JoinRoom", currentRoom, myUsername);
         playChime(true);
         showToast(`Ses odasına bağlanıldı: ${currentRoom}`, "success");
+        updateMuteUI();
 
         // Ping-Pong gecikme testi başlat
         pingInterval = setInterval(async () => {
